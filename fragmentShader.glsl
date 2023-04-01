@@ -8,6 +8,8 @@ in vec4 texpos;
 
 // the texture which will contain the input data
 uniform vec4 confinementArea;
+uniform int confine;
+uniform float G;
 uniform vec2 randSeed;
 uniform sampler2D u_texture;
 // we need to declare an output for the fragment shader
@@ -18,29 +20,37 @@ float rand(vec2 co){
 float rand2(vec2 co) {
     return float(rand(vec2(rand(co) - rand(-co), rand(co))));
 }
+float forceProfile(float dist) {
+    dist = dist + .01;
+    return min(1./abs(dist*dist*dist),30.);
+}
 void main() {
-    // Just set the output to a color
-    // 
-    // vec4(rand(new_color.xy),0,0,0)
     int level = 0;
     ivec2 size = textureSize(u_texture, level);
+    ivec2 thisPos = ivec2(gl_FragCoord.x, gl_FragCoord.y);
     vec4 color = vec4(0);
-    color = texelFetch(u_texture, ivec2(gl_FragCoord.x, gl_FragCoord.y), level);
-    if (color.x < confinementArea.x || color.x > confinementArea.y) {
-        color.z = -color.z;
-    }
-    if (color.y < confinementArea.z || color.y > confinementArea.w) {
-        color.w = -color.w;
+    color = texelFetch(u_texture, thisPos, level)-vec4(0.,0.,0.,.01);
+    if (confine == 1) {
+        if (color.x < confinementArea.x || color.x > confinementArea.y) {
+            color.z = -.95 * color.z;
+        }
+        if (color.y < confinementArea.z || color.y > confinementArea.w) {
+            color.w = -.95 * color.w;
+        }
     }
     vec2 addVel = vec2(0);
-    for (int x=0; x<size.x; x++) {
+
+    for (int x=0; x<size.x; x++){
         for (int y=0; y<size.y; y++) {
-            if (y != int(gl_FragCoord.y) && x!= int(gl_FragCoord.x)) {
-                vec2 compCoord = texelFetch(u_texture, ivec2(x, y), 0).xy;
-                float dist = distance(compCoord.xy, color.xy);
-                addVel += vec2(compCoord.x-color.x, compCoord.y-color.y) / (dist*dist*dist);
+            if (y != thisPos.y && x != thisPos.x) {
+                vec2 comppos = texelFetch(u_texture, ivec2(x,y),0).xy;
+                float d = forceProfile(distance(comppos, color.xy));
+                addVel += (comppos - color.xy) * d * G;
             }
         }
     }
-    outColor = color + vec4(color.zw, addVel / 2000.);
+
+    vec2 newVel = (color.zw + addVel)*.999;
+
+    outColor = vec4(color.xy+color.zw,newVel);
 }

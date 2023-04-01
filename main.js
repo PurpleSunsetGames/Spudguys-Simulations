@@ -67,10 +67,6 @@ function mainGl(canvas) {
 
     let primitiveType = gl.TRIANGLES;
     let count = 6;
-    
-    // setting up uniform parameters
-    let confinementAreaLocation = gl.getUniformLocation(program, "confinementArea");
-    let randomSeedLocation = gl.getUniformLocation(program, "randSeed");
 
 
     // everything in the below area is for setting up the input and output texture arrays
@@ -82,11 +78,25 @@ function mainGl(canvas) {
     let inputTextureUniformLocation = gl.getUniformLocation(program, "u_texture");
 
     let data = [];
-    const width = 80;
-    const height = 80;
+    const width = 100;
+    const height = 100;
+    const startRotVel = .4;
+
     for (let i=0; i<width; i++) {
         for (let i2=0; i2<height; i2++) {
-            data.push((((i/width)*canvas2.width)), (((i2/height)*canvas2.height)), 0, 0);
+            let tempx = (i-width/2) / width;
+            let tempy = (i2-height/2) / height;
+            let dist = Math.sqrt(Math.pow(tempx, 2) + Math.pow(tempy, 2));
+            let a;
+            if (tempx<0) {
+                a = Math.atan2(tempy, tempx);
+            }
+            else {
+                a = Math.atan2(tempy, tempx);
+            }
+            data.push((((i2/width)*canvas2.width)), (((i/height)*canvas2.height)), 
+            -(Math.cos(a)) * startRotVel, 
+            (Math.sin(a)) * startRotVel);
         }
     }
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
@@ -143,16 +153,27 @@ function mainGl(canvas) {
     let num = 1;
     let ctx = canvas2.getContext("webgl2");
     let dotsProgram = dotsProgramGPU(ctx);
+    // some uniforms for the main program
+    let confinementAreaLocation = gl.getUniformLocation(program, "confinementArea");
+    let randomSeedLocation = gl.getUniformLocation(program, "randSeed");
+    let confineLocation = gl.getUniformLocation(program, "confine");
+    let GLocation = gl.getUniformLocation(program, "G");
+    let confine = 0;
+    let G = .01;
+    gl.uniform1i(confineLocation, confine);
+    gl.uniform1f(GLocation, G);
+
+    // uniforms and parameters for the dotsProgram
+    let averagePosCenter = 1;
+
+
     let colors = [];
     for (let i=0; i<width; i++) {
         for (let i2=0; i2<height; i2++) {
-            colors.push(i/width, (i2/height), (i2/height)/(i/width), 255);
+            colors.push(i2/width, 0, (i/height), 1);
         }
     }
-    drawLoop();
-    // TODO: use a 3D texture with z size equal to width*height, then sum
-    // each column along z to get the new vels for each particle. Basically,
-    // parallelize the for-loops that are currently used in the fragment shader
+    drawLoop();    
     function drawLoop() {
         // render to target texture by binding the frame buffer
         gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
@@ -167,22 +188,20 @@ function mainGl(canvas) {
         gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
                       width, height, 0,
                       format, typel, outData);
-        if (num<4040) {
-            num++
-            requestAnimationFrame(drawLoop);
-        }
+        requestAnimationFrame(drawLoop);
+        
         // draw dots on canvas based on that data
         //let ctx = canvas2.getContext("2d");
         //ctx.fillStyle = "black";
         //ctx.fillRect(0,0,canvas2.width,canvas2.height);
         //drawDots(outData, ctx);
-        drawDotsGPU(outData, ctx, dotsProgram, colors);
+        drawDotsGPU(outData, ctx, dotsProgram, colors, averagePosCenter);
         num++;
     }
 }
 const TAU = 2*Math.PI;
 
-function drawDotsGPU(data,gl,prog,colors) {
+function drawDotsGPU(data,gl,prog,colors, averagePosCenter) {
     const a_PositionIndex = gl.getAttribLocation(prog, 'a_Position')
     const a_ColorIndex = gl.getAttribLocation(prog, 'a_Color')
     
@@ -206,8 +225,20 @@ function drawDotsGPU(data,gl,prog,colors) {
     gl.vertexAttribPointer(a_ColorIndex, 4, gl.FLOAT, false, 0, 0);
     let newdata = [];
     let i = 0;
+    let totX = 0;
+    let totY = 0;
+    if (averagePosCenter === 1) {
+        while (i<data.length) {
+            totX += data[i];
+            totY += data[i+1];
+            i += 4;
+        }
+        totX = totX / (data.length / 4);
+        totY = totY / (data.length / 4);
+    }
+    i=0;
     while (i<data.length) {
-        newdata.push((data[i]-200) / 200, (data[i + 1]-200) / 200);
+        newdata.push(((data[i] - totX)) / 200, ((data[i + 1] - totY)) / 200);
         i += 4;
     }
     // Add some points to the position buffer
@@ -216,13 +247,13 @@ function drawDotsGPU(data,gl,prog,colors) {
     gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
     
     // Add some points to the color buffer
-    gl.bindBuffer(gl.ARRAY_BUFFER, a_ColorBuffer)
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_COPY)
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_ColorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_COPY);
     
     // Draw the point
-    gl.clearColor(0, 0, 0, 1)
-    gl.clear(gl.COLOR_BUFFER_BIT)
-    gl.drawArrays(gl.POINTS, 0, positions.length / 4) // draw all 4 points
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, positions.length / 4);
 }
 
 function dotsProgramGPU(gl) {
@@ -271,7 +302,7 @@ function dotsProgramGPU(gl) {
     const u_PointSize = gl.getUniformLocation(prog, 'u_PointSize')
     
     // Set uniform value
-    gl.uniform1f(u_PointSize, 1)
+    gl.uniform1f(u_PointSize, 2)
     
     // Get attribute locations
     const a_PositionIndex = gl.getAttribLocation(prog, 'a_Position')
