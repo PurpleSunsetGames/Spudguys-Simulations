@@ -44,7 +44,7 @@ void main() {
         for (int y=0; y<size.y; y++) {
             if (y != thisPos.y && x != thisPos.x) {
                 vec2 comppos = texelFetch(u_texture, ivec2(x,y),0).xy;
-                float d = forceProfile(distance(comppos, color.xy));
+                float d = forceProfile(distance(comppos, color.xy)+1.);
                 addVel += (comppos - color.xy) * d * G;
             }
         }

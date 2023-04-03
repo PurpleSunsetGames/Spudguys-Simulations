@@ -78,28 +78,22 @@ function mainGl(canvas) {
     let inputTextureUniformLocation = gl.getUniformLocation(program, "u_texture");
 
     let data = [];
-    const width = 100;
-    const height = 100;
-    const startRotVel = .02;
-
-    for (let i=0; i<width; i++) {
-        for (let i2=0; i2<height; i2++) {
-            let tempx = (i-width/2) / width;
-            let tempy = (i2-height/2) / height;
-            let dist = Math.sqrt(Math.abs(Math.pow(tempx, 2) + Math.pow(tempy, 2)));
-            if(dist===0) {dist=1}
-            let a;
-            if (tempx<0) {
-                a = Math.atan2(tempy, tempx);
-            }
-            else {
-                a = Math.atan2(tempy, tempx);
-            }
-            data.push((i2/width)*canvas2.width, 
-                     (i/height)*canvas2.height, 
-                     -(Math.cos(a)/(dist**2)) * startRotVel, 
-                     (Math.sin(a)/(dist**2)) * startRotVel);
-        }
+    const numParticlesSqrt = 316;
+    let width = numParticlesSqrt;
+    let height = numParticlesSqrt;
+    const startRotVel = 10;
+    let radius = 400;
+    let randAngle;
+    let randRadius;
+    let colors = [];
+    for (let i=0; i<numParticlesSqrt**2; i++) {
+        randAngle = (Math.random() - .5) * Math.PI * 2;
+        randRadius = Math.max(Math.random() * radius, 10);
+        data.push(Math.cos(randAngle) * randRadius, 
+                    Math.sin(randAngle) * randRadius, 
+                    -(Math.sin(randAngle)/randRadius**.333) * startRotVel, 
+                    (Math.cos(randAngle)/randRadius**.333) * startRotVel);
+        colors.push(Math.cos(Math.PI*randRadius/radius)**2 + .1, 0, Math.sin(1.5*Math.PI*randRadius/radius)**2 + .1, 1);
     }
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
                   width, height, 0,
@@ -168,13 +162,6 @@ function mainGl(canvas) {
     // uniforms and parameters for the dotsProgram
     let averagePosCenter = 1;
 
-
-    let colors = [];
-    for (let i=0; i<width; i++) {
-        for (let i2=0; i2<height; i2++) {
-            colors.push(i2/width, 0, (i/height), 1);
-        }
-    }
     drawLoop();    
     function drawLoop() {
         // render to target texture by binding the frame buffer
@@ -193,10 +180,6 @@ function mainGl(canvas) {
         requestAnimationFrame(drawLoop);
         
         // draw dots on canvas based on that data
-        //let ctx = canvas2.getContext("2d");
-        //ctx.fillStyle = "black";
-        //ctx.fillRect(0,0,canvas2.width,canvas2.height);
-        //drawDots(outData, ctx);
         drawDotsGPU(outData, ctx, dotsProgram, colors, averagePosCenter);
         num++;
     }
@@ -204,22 +187,22 @@ function mainGl(canvas) {
 const TAU = 2*Math.PI;
 
 function drawDotsGPU(data,gl,prog,colors, averagePosCenter) {
-    const a_PositionIndex = gl.getAttribLocation(prog, 'a_Position')
-    const a_ColorIndex = gl.getAttribLocation(prog, 'a_Color')
+    const a_PositionIndex = gl.getAttribLocation(prog, 'a_Position');
+    const a_ColorIndex = gl.getAttribLocation(prog, 'a_Color');
     
     // Set up attribute buffers
-    const a_PositionBuffer = gl.createBuffer()
-    const a_ColorBuffer = gl.createBuffer()
+    const a_PositionBuffer = gl.createBuffer();
+    const a_ColorBuffer = gl.createBuffer();
     
     // Set up a vertex array object
     // This tells WebGL how to iterate your attribute buffers
-    const vao = gl.createVertexArray()
+    const vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
     
     // Pull 2 floats at a time out of the position buffer
     gl.bindBuffer(gl.ARRAY_BUFFER, a_PositionBuffer);
     gl.enableVertexAttribArray(a_PositionIndex);
-    gl.vertexAttribPointer(a_PositionIndex, 4, gl.FLOAT, false, 0, 0);
+    gl.vertexAttribPointer(a_PositionIndex, 2, gl.FLOAT, false, 0, 0);
     
     // Pull 4 floats at a time out of the color buffer
     gl.bindBuffer(gl.ARRAY_BUFFER, a_ColorBuffer);
@@ -235,8 +218,8 @@ function drawDotsGPU(data,gl,prog,colors, averagePosCenter) {
             totY += data[i+1];
             i += 4;
         }
-        totX = totX / (data.length / 4);
-        totY = totY / (data.length / 4);
+        totX = totX / (data.length/4);
+        totY = totY / (data.length/4);
     }
     i=0;
     while (i<data.length) {
@@ -267,7 +250,7 @@ function dotsProgramGPU(gl) {
     out vec4 v_Color;
     void main() {
         v_Color = a_Color;
-        gl_Position = vec4(a_Position, 0, 1);
+        gl_Position = vec4(a_Position, 0, 2);
         gl_PointSize = u_PointSize;
     }`
     const vs = gl.createShader(gl.VERTEX_SHADER)
@@ -301,33 +284,33 @@ function dotsProgramGPU(gl) {
     gl.useProgram(prog)
     
     // Get uniform location
-    const u_PointSize = gl.getUniformLocation(prog, 'u_PointSize')
+    const u_PointSize = gl.getUniformLocation(prog, 'u_PointSize');
     
     // Set uniform value
-    gl.uniform1f(u_PointSize, 2)
+    gl.uniform1f(u_PointSize, 2);
     
     // Get attribute locations
-    const a_PositionIndex = gl.getAttribLocation(prog, 'a_Position')
-    const a_ColorIndex = gl.getAttribLocation(prog, 'a_Color')
+    const a_PositionIndex = gl.getAttribLocation(prog, 'a_Position');
+    const a_ColorIndex = gl.getAttribLocation(prog, 'a_Color');
     
     // Set up attribute buffers
-    const a_PositionBuffer = gl.createBuffer()
-    const a_ColorBuffer = gl.createBuffer()
+    const a_PositionBuffer = gl.createBuffer();
+    const a_ColorBuffer = gl.createBuffer();
     
     // Set up a vertex array object
     // This tells WebGL how to iterate your attribute buffers
-    const vao = gl.createVertexArray()
-    gl.bindVertexArray(vao)
+    const vao = gl.createVertexArray();
+    gl.bindVertexArray(vao);
     
     // Pull 2 floats at a time out of the position buffer
-    gl.bindBuffer(gl.ARRAY_BUFFER, a_PositionBuffer)
-    gl.enableVertexAttribArray(a_PositionIndex)
-    gl.vertexAttribPointer(a_PositionIndex, 2, gl.FLOAT, false, 0, 0)
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_PositionBuffer);
+    gl.enableVertexAttribArray(a_PositionIndex);
+    gl.vertexAttribPointer(a_PositionIndex, 2, gl.FLOAT, false, 0, 0);
     
     // Pull 4 floats at a time out of the color buffer
-    gl.bindBuffer(gl.ARRAY_BUFFER, a_ColorBuffer)
-    gl.enableVertexAttribArray(a_ColorIndex)
-    gl.vertexAttribPointer(a_ColorIndex, 2, gl.FLOAT, false, 0, 0)
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_ColorBuffer);
+    gl.enableVertexAttribArray(a_ColorIndex);
+    gl.vertexAttribPointer(a_ColorIndex, 4, gl.FLOAT, false, 0, 0);
     
     // Add some points to the position buffer
     const positions = new Float32Array([
@@ -341,10 +324,10 @@ function dotsProgramGPU(gl) {
     
     // Add some points to the color buffer
     const colors = new Float32Array([
-        1.0, 0.0, 0.0, 1.0, // red
-        0.0, 1.0, 0.0, 1.0, // green
-        0.0, 0.0, 1.0, 1.0, // blue
-        1.0, 1.0, 0.0, 1.0, // yellow
+        1.0, 0.0, 0.0, .2, // red
+        0.0, 1.0, 0.0, .2, // green
+        0.0, 0.0, 1.0, .2, // blue
+        1.0, 1.0, 0.0, .2, // yellow
     ])
     gl.bindBuffer(gl.ARRAY_BUFFER, a_ColorBuffer)
     gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW)
