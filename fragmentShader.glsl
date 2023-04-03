@@ -22,7 +22,7 @@ float rand2(vec2 co) {
 }
 float forceProfile(float dist) {
     dist = dist + .01;
-    return min(1./abs(dist*dist*dist),30.);
+    return 1./abs(dist*dist*dist);
 }
 void main() {
     int level = 0;

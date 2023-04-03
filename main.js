@@ -80,13 +80,14 @@ function mainGl(canvas) {
     let data = [];
     const width = 100;
     const height = 100;
-    const startRotVel = .4;
+    const startRotVel = .02;
 
     for (let i=0; i<width; i++) {
         for (let i2=0; i2<height; i2++) {
             let tempx = (i-width/2) / width;
             let tempy = (i2-height/2) / height;
-            let dist = Math.sqrt(Math.pow(tempx, 2) + Math.pow(tempy, 2));
+            let dist = Math.sqrt(Math.abs(Math.pow(tempx, 2) + Math.pow(tempy, 2)));
+            if(dist===0) {dist=1}
             let a;
             if (tempx<0) {
                 a = Math.atan2(tempy, tempx);
@@ -94,9 +95,10 @@ function mainGl(canvas) {
             else {
                 a = Math.atan2(tempy, tempx);
             }
-            data.push((((i2/width)*canvas2.width)), (((i/height)*canvas2.height)), 
-            -(Math.cos(a)) * startRotVel, 
-            (Math.sin(a)) * startRotVel);
+            data.push((i2/width)*canvas2.width, 
+                     (i/height)*canvas2.height, 
+                     -(Math.cos(a)/(dist**2)) * startRotVel, 
+                     (Math.sin(a)/(dist**2)) * startRotVel);
         }
     }
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
