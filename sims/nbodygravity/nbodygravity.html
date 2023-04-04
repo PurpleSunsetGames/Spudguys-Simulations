@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="keywords" content="gravity, physics, HTML, CSS, JavaScript">
+    <meta name="author" content="The Spudguy">
+    <meta name="description" content="A gravity simulation for an arbitrary number of bodies.">
+    
+    <meta charset="utf-8">
+    <title>N-body Gravity Sim</title>
+    <link rel="stylesheet" href="../../css/nbodygravitysim.css">
+</head>
+<body bgcolor="#111111">
+    <canvas id="mainCanvas" height="0" width="0"></canvas>
+    <div class="leftMenu">
+        <p class="instructions">Press Space to pause/unpause the simulation</p>
+        <p class="instructions">Scroll to zoom and drag to pan</p>
+        <a href="/">Home</a>
+    </div>
+    <div class="canvasContainer">
+        <canvas class="otherCanvas" id="otherCanvas" width="400" height="300"></canvas>
+    </div>
+    <div class="rightMenu">
+        <p class="information fll" id="numParticles">Number of Particles: </p>
+        <p class="information" id="framerate">Framerate (fps): </p>
+        <button class='homeIcon fll' id="homeIcon"></button>
+        <button class="clearIcon fll" id="clearButton"></button>
+        <button class="resetIcon fll" id="resetButton"></button>
+        <div class="buttonContainer"> 
+            <input type="number" min="0" step="1" value="512" id="particleQuantityInput" class="numberInput" onkeypress="return(event.charCode != 8 ** event.charCode ==0 || (event.charCode >= 48 && event.charCode <=57))"></input>           
+        </div>
+    </div>
+    <script src="fragmentShader.glsl" type="notjs"></script>
+    <script src="vertexShader.glsl" type="notjs"></script>
+    <script src="main.js"></script>
+</body>

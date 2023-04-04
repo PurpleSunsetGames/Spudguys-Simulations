@@ -3,26 +3,33 @@
 <head>
     <meta name="keywords" content="gravity, physics, HTML, CSS, JavaScript">
     <meta name="author" content="The Spudguy">
-    <meta name="description" content="A gravity simulation for an arbitrary number of bodies.">
+    <meta name="description" content="A series of webgl2-based physics simulations">
     
     <meta charset="utf-8">
     <title>N-body Gravity Sim</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="../../css/home.css">
 </head>
-<body bgcolor="#111111">
-    <canvas id="mainCanvas" height="0" width="0"></canvas>
-    <div class="leftMenu">
-        <p class="instructions">Press Space to pause/unpause the simulation</p>
-        <p class="instructions">Scroll to zoom and drag to pan</p>
+<body bgcolor="#111111" style="margin:0%;">
+    <div class="titleContainer fon">
+        <h1>The Spudguy's Simulations</h1>
+        <p>Webgl Physics simulations running on the GPU</p>
     </div>
-    <div class="canvasContainer">
-        <canvas class="otherCanvas" id="otherCanvas" width="400" height="300"></canvas>
+    <div>
+        <h2 class="sectionTitle fon">Particle-based Simulations</h2>
     </div>
-    <div class="rightMenu">
-        <p class="information" id="numParticles">Number of Particles: </p>
-        <p class="information" id="framerate">Framerate (fps): </p>
+    <div class="itemContainer">
+        <a href="/sims/nbodygravity/nbodygravity.html" class="orderFirst fll thumbImgContainer">
+            <img src="/thumbnails/nbodythumb.png" href="/sims/nbodygravity/nbodygravity.html" class="thumbImg">
+        </a>
+        <div class="itemDescriptionContainer flr">
+            <a class="fon orderSecond itemTitle" href="/sims/nbodygravity/nbodygravity.html">
+                N-body Gravity Simulation
+            </a>
+            <p class="itemDescription fon">
+                This is a simulation of an arbitrary number of gravitational
+                bodies interacting with each other in interesting and chaotic ways. To the left, you will see a screenshot
+                of the simulation in action, simulating nearly 100,000 particles at once.
+            </p>
+        </div>
     </div>
-    <script src="fragmentShader.glsl" type="notjs"></script>
-    <script src="vertexShader.glsl" type="notjs"></script>
-    <script src="main.js"></script>
 </body>
