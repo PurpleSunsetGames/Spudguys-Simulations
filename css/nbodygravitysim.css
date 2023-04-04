@@ -55,7 +55,7 @@ a{
     border-radius: 3px;
 }
 .homeIcon{
-    background: url('/sims/nbodygravity/iconassets/dsBuffer.bmp.png');
+    background: url('/Testing-texture-buffers/sims/nbodygravity/iconassets/dsBuffer.bmp.png');
     height: 20px;
     width: 20px;
     display: block;
@@ -66,7 +66,7 @@ a{
     opacity: .6;
 }
 .clearIcon{
-    background: url('/sims/nbodygravity/iconassets/clear.png');
+    background: url('/Testing-texture-buffers/sims/nbodygravity/iconassets/clear.png');
     height: 20px;
     width: 20px;
     display: block;
@@ -77,7 +77,7 @@ a{
     opacity: .6;
 }
 .resetIcon{
-    background: url('/sims/nbodygravity/iconassets/reset.png');
+    background: url('/Testing-texture-buffers/sims/nbodygravity/iconassets/reset.png');
     height: 20px;
     width: 20px;
     display: block;
