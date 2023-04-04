@@ -1,0 +1,28 @@
+.leftMenu {
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    width: 25%;
+    float:left;
+}
+.rightMenu {
+    font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+    width: 25%;
+    float:right;
+}
+.otherCanvas{
+    margin: 0%;
+    width: 95%;
+    height: auto;
+}
+.canvasContainer{
+    float:left;
+    margin-left:0%;
+    margin-right:0%;
+    width:50%;
+    height:50%;
+}
+.instructions{
+    color:azure;
+}
+.information{
+    color:rgb(99, 157, 177);
+}

@@ -1,8 +1,46 @@
 'use strict';
 let canvas = document.getElementById("mainCanvas");
 let canvas2 = document.getElementById("otherCanvas");
+let numParticlesDisplay = document.getElementById("numParticles"); 
+let framerateDisplay = document.getElementById("framerate");
 let vertexShaderSource = "";
 let fragmentShaderSource = "";
+
+let displayRes = 2,
+    windowOffset = {x:0, y:0, z:.5},
+    confine = 0,
+    G = .01,
+    mouseDown,
+    animating=1,
+    numParticlesSqrt = 317,
+    framerate;
+
+// Adding interaction for the uniforms
+canvas2.addEventListener("wheel", (e)=>{
+    windowOffset.z += e.deltaY*windowOffset.z / 1000;
+    console.log(windowOffset);
+});
+canvas2.addEventListener('mousedown', 
+() => {mouseDown = true}
+);
+canvas2.addEventListener("mousemove", (e)=>{
+    if (mouseDown) {
+        console.log(windowOffset);
+        windowOffset.x += 2*e.movementX/canvas2.clientWidth * windowOffset.z;
+        windowOffset.y -= 2*e.movementY/canvas2.clientHeight * windowOffset.z;
+    }
+})
+window.addEventListener("keydown", (e)=>{
+    if (e.key === " ") {
+        animating = !animating;
+    }
+});
+
+window.addEventListener('mouseup', 
+() => {mouseDown = false}
+);
+
+
 async function getFragShad() {
     fragmentShaderSource = await fetch("fragmentShader.glsl").then(result=>result.text());
     vertexShaderSource = await fetch("vertexShader.glsl").then(result=>result.text());
@@ -12,6 +50,8 @@ getFragShad();
 
 function mainGl(canvas) {
     let gl = canvas.getContext("webgl2");
+    canvas.style.display = 'none';
+
     let ext = gl.getExtension("EXT_color_buffer_float");
     if (!ext) {
         alert("nope");
@@ -78,7 +118,6 @@ function mainGl(canvas) {
     let inputTextureUniformLocation = gl.getUniformLocation(program, "u_texture");
 
     let data = [];
-    const numParticlesSqrt = 316;
     let width = numParticlesSqrt;
     let height = numParticlesSqrt;
     const startRotVel = 10;
@@ -88,12 +127,12 @@ function mainGl(canvas) {
     let colors = [];
     for (let i=0; i<numParticlesSqrt**2; i++) {
         randAngle = (Math.random() - .5) * Math.PI * 2;
-        randRadius = Math.max(Math.random() * radius, 10);
+        randRadius = (Math.random()**3) * radius + 90;
         data.push(Math.cos(randAngle) * randRadius, 
                     Math.sin(randAngle) * randRadius, 
                     -(Math.sin(randAngle)/randRadius**.333) * startRotVel, 
                     (Math.cos(randAngle)/randRadius**.333) * startRotVel);
-        colors.push(Math.cos(Math.PI*randRadius/radius)**2 + .1, 0, Math.sin(1.5*Math.PI*randRadius/radius)**2 + .1, 1);
+        colors.push(Math.cos(Math.PI*randRadius/radius)**2 + .1, 0, Math.sin(3+Math.PI*randRadius/radius)**2 + .1, 1);
     }
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
                   width, height, 0,
@@ -146,49 +185,59 @@ function mainGl(canvas) {
     // Everything should be bound properly now. Time to start actually rendering stuff to the texture
     let outData = new Float32Array(width*height*4);
 
-    let num = 1;
     let ctx = canvas2.getContext("webgl2");
     let dotsProgram = dotsProgramGPU(ctx);
+
     // some uniforms for the main program
     let confinementAreaLocation = gl.getUniformLocation(program, "confinementArea");
     let randomSeedLocation = gl.getUniformLocation(program, "randSeed");
     let confineLocation = gl.getUniformLocation(program, "confine");
     let GLocation = gl.getUniformLocation(program, "G");
-    let confine = 0;
-    let G = .01;
+    
     gl.uniform1i(confineLocation, confine);
     gl.uniform1f(GLocation, G);
 
     // uniforms and parameters for the dotsProgram
     let averagePosCenter = 1;
-
+    let lastTime;
+    let thisTime;
     drawLoop();    
     function drawLoop() {
+        thisTime = performance.now();
+        framerateDisplay.innerHTML = "Framerate (fps): " + Math.round(10000 / (thisTime - lastTime))/10;
         // render to target texture by binding the frame buffer
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-        // Set the uniform parameters and run the program
-        gl.uniform4f(confinementAreaLocation, 0, canvas2.width, 0, canvas2.height);
-        gl.uniform2f(randomSeedLocation, Math.random(), Math.random());
-        gl.drawArrays(primitiveType, offset, count);
+        if (animating) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+            // Set the uniform parameters and run the program
+            gl.uniform4f(confinementAreaLocation, 0, canvas2.width, 0, canvas2.height);
+            gl.uniform2f(randomSeedLocation, Math.random(), Math.random());
+            gl.drawArrays(primitiveType, offset, count);
 
-        // finally, retrieve data from the fb and send it to outData as a js array
-        gl.readPixels(0, 0, width, height, format, typel, outData);
-        // use that js array to update the data of the input texture
-        gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
-                      width, height, 0,
-                      format, typel, outData);
-        requestAnimationFrame(drawLoop);
-        
+            // finally, retrieve data from the fb and send it to outData as a js array
+            gl.readPixels(0, 0, width, height, format, typel, outData);
+            // use that js array to update the data of the input texture
+            gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
+                        width, height, 0,
+                        format, typel, outData);
+        }
+        updateDisplayValues();
         // draw dots on canvas based on that data
         drawDotsGPU(outData, ctx, dotsProgram, colors, averagePosCenter);
-        num++;
+        lastTime = thisTime;
+        requestAnimationFrame(drawLoop);
     }
+}
+function updateDisplayValues() {
+    numParticlesDisplay.innerHTML = "Particle Quantity: " + numParticlesSqrt**2;
 }
 const TAU = 2*Math.PI;
 
 function drawDotsGPU(data,gl,prog,colors, averagePosCenter) {
     const a_PositionIndex = gl.getAttribLocation(prog, 'a_Position');
     const a_ColorIndex = gl.getAttribLocation(prog, 'a_Color');
+    let windowOffsetLocation = gl.getUniformLocation(prog, "windowOffset");
+    const u_PointSize = gl.getUniformLocation(prog, 'u_PointSize');
+
     
     // Set up attribute buffers
     const a_PositionBuffer = gl.createBuffer();
@@ -223,7 +272,7 @@ function drawDotsGPU(data,gl,prog,colors, averagePosCenter) {
     }
     i=0;
     while (i<data.length) {
-        newdata.push(((data[i] - totX)) / 200, ((data[i + 1] - totY)) / 200);
+        newdata.push(((data[i] - totX)) / canvas2.width, ((data[i + 1] - totY)) / canvas2.width);
         i += 4;
     }
     // Add some points to the position buffer
@@ -236,6 +285,14 @@ function drawDotsGPU(data,gl,prog,colors, averagePosCenter) {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_COPY);
     
     // Draw the point
+    canvas2.width = displayRes*Math.min(window.innerWidth, window.innerHeight);
+    canvas2.height = displayRes*Math.min(window.innerWidth, window.innerHeight);
+
+    gl.uniform3f(windowOffsetLocation, windowOffset.x, windowOffset.y, windowOffset.z);
+    gl.uniform1f(u_PointSize, 1/windowOffset.z);
+
+    gl.viewport(0, 0, canvas2.width, canvas2.height);
+
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.POINTS, 0, positions.length / 4);
@@ -247,10 +304,13 @@ function dotsProgramGPU(gl) {
     uniform float u_PointSize;
     in vec2 a_Position;
     in vec4 a_Color;
+
+    uniform vec3 windowOffset;
+
     out vec4 v_Color;
     void main() {
         v_Color = a_Color;
-        gl_Position = vec4(a_Position, 0, 2);
+        gl_Position = vec4(a_Position + windowOffset.xy, 0., windowOffset.z);
         gl_PointSize = u_PointSize;
     }`
     const vs = gl.createShader(gl.VERTEX_SHADER)
@@ -263,7 +323,7 @@ function dotsProgramGPU(gl) {
     in vec4 v_Color;
     out vec4 color;
     void main() {
-        color = v_Color;
+        color = vec4(v_Color.xyz, .2);
     }`
     const fs = gl.createShader(gl.FRAGMENT_SHADER)
     gl.shaderSource(fs, fragmentShaderSource)
@@ -281,13 +341,18 @@ function dotsProgramGPU(gl) {
     }
     
     // Use the program
-    gl.useProgram(prog)
+    gl.useProgram(prog);
+
+    let windowOffsetLocation = gl.getUniformLocation(prog, "windowOffset");
+    gl.uniform3f(windowOffsetLocation, windowOffset.x, windowOffset.y, windowOffset.z);
+
+    gl.viewport(0, 0, canvas2.width, canvas2.height);
     
     // Get uniform location
     const u_PointSize = gl.getUniformLocation(prog, 'u_PointSize');
     
     // Set uniform value
-    gl.uniform1f(u_PointSize, 2);
+    gl.uniform1f(u_PointSize, 4);
     
     // Get attribute locations
     const a_PositionIndex = gl.getAttribLocation(prog, 'a_Position');
@@ -318,9 +383,9 @@ function dotsProgramGPU(gl) {
         1.0,  1.0, // top-right
         1.0, -1.0, // bottom-right
         -1.0, -1.0, // bottom-left
-    ])
-    gl.bindBuffer(gl.ARRAY_BUFFER, a_PositionBuffer)
-    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW)
+    ]);
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_PositionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
     
     // Add some points to the color buffer
     const colors = new Float32Array([
@@ -329,13 +394,13 @@ function dotsProgramGPU(gl) {
         0.0, 0.0, 1.0, .2, // blue
         1.0, 1.0, 0.0, .2, // yellow
     ])
-    gl.bindBuffer(gl.ARRAY_BUFFER, a_ColorBuffer)
-    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW)
+    gl.bindBuffer(gl.ARRAY_BUFFER, a_ColorBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, colors, gl.STATIC_DRAW);
     
     // Draw the point
-    gl.clearColor(0, 0, 0, 1)
-    gl.clear(gl.COLOR_BUFFER_BIT)
-    gl.drawArrays(gl.POINTS, 0, positions.length / 2) // draw all 4 points
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.POINTS, 0, positions.length / 2); // draw all 4 points
     return prog;
 }
 function drawDots(data, ctx) {
