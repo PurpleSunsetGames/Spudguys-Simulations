@@ -30,14 +30,6 @@ void main() {
     ivec2 thisPos = ivec2(gl_FragCoord.x, gl_FragCoord.y);
     vec4 color = vec4(0);
     color = texelFetch(u_texture, thisPos, level);
-    if (confine == 1) {
-        if (color.x < confinementArea.x || color.x > confinementArea.y) {
-            color.z = -.95 * color.z;
-        }
-        if (color.y < confinementArea.z || color.y > confinementArea.w) {
-            color.w = -.95 * color.w;
-        }
-    }
     vec2 addVel = vec2(0);
 
     for (int x=0; x<size.x; x++){

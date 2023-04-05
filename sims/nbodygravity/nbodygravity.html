@@ -14,19 +14,19 @@
     <div class="leftMenu">
         <p class="instructions">Press Space to pause/unpause the simulation</p>
         <p class="instructions">Scroll to zoom and drag to pan</p>
+            <!--Testing-texture-buffers-->
         <a href="/Testing-texture-buffers">Home</a>
     </div>
     <div class="canvasContainer">
         <canvas class="otherCanvas" id="otherCanvas" width="400" height="300"></canvas>
     </div>
     <div class="rightMenu">
-        <p class="information fll" id="numParticles">Number of Particles: </p>
-        <p class="information" id="framerate">Framerate (fps): </p>
-        <button class='homeIcon fll' id="homeIcon"></button>
-        <button class="clearIcon fll" id="clearButton"></button>
-        <button class="resetIcon fll" id="resetButton"></button>
+        <p class="information fll" id="numParticles">Number of Particles: <input type="number" min="0" step="1" value="512" id="particleQuantityInput" class="numberInput fon" onkeypress="return(event.charCode != 8 ** event.charCode ==0 || (event.charCode >= 48 && event.charCode <=57))"></input></p>
+        <p class="information fll" id="framerate">Framerate (fps): </p>
         <div class="buttonContainer"> 
-            <input type="number" min="0" step="1" value="512" id="particleQuantityInput" class="numberInput" onkeypress="return(event.charCode != 8 ** event.charCode ==0 || (event.charCode >= 48 && event.charCode <=57))"></input>           
+            <button class='homeIcon fll' id="homeIcon"></button>
+            <button class="clearIcon fll" id="clearButton"></button>
+            <button class="resetIcon fll" id="resetButton"></button>                
         </div>
     </div>
     <script src="fragmentShader.glsl" type="notjs"></script>

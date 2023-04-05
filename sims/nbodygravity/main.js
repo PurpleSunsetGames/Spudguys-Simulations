@@ -20,19 +20,21 @@ let displayRes = 2,
     animating=1,
     framerate,
     cease = false,
-    numParticles = 512;
-alert("This program currently bugs out for particle quantities greater than 512.")
+    numParticles = 6556;
+let splitWidth = greatestFactors(numParticles).x; 
+let splitHeight = greatestFactors(numParticles).y;
+console.log(splitWidth, splitHeight);
+
+//alert("This program currently bugs out for particle quantities greater than 512.")
 // Adding interaction for the uniforms
 canvas2.addEventListener("wheel", (e)=>{
     windowOffset.z += e.deltaY*windowOffset.z / 1000;
-    console.log(windowOffset);
 });
 canvas2.addEventListener('mousedown', 
 () => {mouseDown = true}
 );
 canvas2.addEventListener("mousemove", (e)=>{
     if (mouseDown) {
-        console.log(windowOffset);
         windowOffset.x += 2*e.movementX/canvas2.clientWidth * windowOffset.z;
         windowOffset.y -= 2*e.movementY/canvas2.clientHeight * windowOffset.z;
     }
@@ -52,7 +54,6 @@ homeIcon.addEventListener("click",function(){
     windowOffset.x = defaultWindowOffset.x;
     windowOffset.y = defaultWindowOffset.y;
     windowOffset.z = defaultWindowOffset.z;
-    console.log("a");
 });
 
 async function getFragShad() {
@@ -110,8 +111,7 @@ function mainGl(canvas) {
     let offset = 0;        // start at the beginning of the buffer
     gl.vertexAttribPointer(
         0, size, type, normalize, stride, offset);
-    
-    gl.viewport(0, 0, 256, 256);
+    gl.viewport(0,0,splitWidth,splitHeight);
     gl.clearColor(0, 0, 1, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
@@ -137,7 +137,9 @@ function mainGl(canvas) {
     let randAngle;
     let randRadius;
     let colors = [];
-    function regenParticleData(){
+    function regenParticleData(r=false){
+        splitWidth = greatestFactors(numParticles).x; 
+        splitHeight = greatestFactors(numParticles).y;
         gl.bindTexture(gl.TEXTURE_2D, inputTexture);
 
         data = [];
@@ -151,14 +153,15 @@ function mainGl(canvas) {
                         (Math.cos(randAngle)/randRadius**.333) * startRotVel);
             colors.push(Math.cos(Math.PI*randRadius/radius)**2 + .1, 0, Math.sin(3+Math.PI*randRadius/radius)**2 + .1, 1);
         }
-        numParticles = numParticles;
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
-            numParticles, 1, 0,
+            splitWidth, splitHeight, 0,
             gl.RGBA, gl.FLOAT, new Float32Array(data));
+        
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        if(r){return data}
     }
     function clearParticleData(){
         gl.bindTexture(gl.TEXTURE_2D, inputTexture);
@@ -169,6 +172,8 @@ function mainGl(canvas) {
             0, 0, 0,
             gl.RGBA, gl.FLOAT, new Float32Array(data));
         numParticles = 0;
+        splitWidth = 0;
+        splitHeight= 0;
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -194,7 +199,7 @@ function mainGl(canvas) {
     const typel = gl.FLOAT;
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
     gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-                    numParticles, 1, border,
+                    splitWidth, splitHeight, border,
                     format, typel, null);
     
     // set the filtering so we don't need mips
@@ -218,6 +223,37 @@ function mainGl(canvas) {
     gl.bindTexture(gl.TEXTURE_2D, inputTexture);
     gl.uniform1i(inputTextureUniformLocation, inde)
 
+    function resetTarget(){
+        regenParticleData()
+
+        gl.bindTexture(gl.TEXTURE_2D, inputTexture);
+        let inputTextureUniformLocation = gl.getUniformLocation(program, "u_texture");
+
+        gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+
+        const level = 0;
+        const internalFormat = gl.RGBA32F;
+        const border = 0;
+        const format = gl.RGBA;
+        const typel = gl.FLOAT;
+        gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+        gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
+                        splitWidth, splitHeight, border,
+                        format, typel, new Float32Array(numParticles*4));
+        
+        // set the filtering so we don't need mips
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+        const attachmentPoint = gl.COLOR_ATTACHMENT0;
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);    
+        
+        gl.activeTexture(gl.TEXTURE0+inde);
+        gl.bindTexture(gl.TEXTURE_2D, inputTexture);
+        gl.uniform1i(inputTextureUniformLocation, inde);
+    }
+
     /// ------------------------------- ///
 
     // Everything should be bound properly now. Time to start actually rendering stuff to the texture
@@ -239,6 +275,7 @@ function mainGl(canvas) {
     let averagePosCenter = 0;
     let lastTime;
     let thisTime;
+    let needRegenBuffer = false;
     drawLoop();    
     function drawLoop() {
         thisTime = performance.now();
@@ -249,29 +286,33 @@ function mainGl(canvas) {
             // Set the uniform parameters and run the program
             gl.uniform4f(confinementAreaLocation, 0, canvas2.width, 0, canvas2.height);
             gl.uniform2f(randomSeedLocation, Math.random(), Math.random());
+            gl.uniform1f(GLocation, G);
+
+            gl.viewport(0, 0, splitWidth, splitHeight);
+
             gl.drawArrays(primitiveType, offset, count);
+            gl.readPixels(0, 0, splitWidth, splitHeight, format, typel, outData);
 
             // finally, retrieve data from the fb and send it to outData as a js array
-            gl.readPixels(0, 0, numParticles, 1, format, typel, outData);
+            if(needRegenBuffer){
+                outData = regenParticleData(true);
+            }
             outData = Array.from(outData);
-            let needRegenBuffer = false;
+            needRegenBuffer = false;
             if(outData.length/4 != numParticles){
                 needRegenBuffer = true
             }
-            while (outData.length/4 != numParticles) {
-                if (outData.length/4 < numParticles) {
-                    outData.push((Math.random()-.5)*5, (Math.random()-.5)*5, Math.random()-.5, Math.random()-.5);
-                    colors.push(Math.random(), Math.random(), Math.random(), 1);
-                }
-                if (outData.length/4 > numParticles) {
-                    outData.pop();outData.pop();outData.pop();outData.pop();
-                    colors.pop(); colors.pop(); colors.pop(); colors.pop(); 
-                }
+            if(needRegenBuffer){
+                outData.length = numParticles * 4;
+                colors.length = numParticles * 4;
+                resetTarget();
+                console.log("F");
             }
             outData = new Float32Array(outData);
+
             // use that js array to update the data of the input texture
             gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
-                        numParticles, 1, 0,
+                        splitWidth, splitHeight, 0,
                         format, typel, outData);
         }
         updateDisplayValues();
@@ -284,10 +325,22 @@ function mainGl(canvas) {
     }
 }
 function greatestFactors(x) {
-
+    let a=1;
+    let diff=x-1;
+    let found1=1;
+    let found2=x;
+    while (a<Math.sqrt(x)){
+        if (Number.isInteger(x/a)){
+            found1=a;
+            found2=x/a;
+            diff = found2-found1;
+        }
+        a++;
+    }
+    return {x:Number(found1), y:Number(found2)};
 }
 function updateDisplayValues() {
-    numParticlesDisplay.innerHTML = "Particle Quantity: " + numParticles;
+    particleQuantityInput.value=numParticles;
 }
 const TAU = 2*Math.PI;
 
