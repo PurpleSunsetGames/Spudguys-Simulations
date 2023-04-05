@@ -20,7 +20,7 @@ let displayRes = 2,
     animating=1,
     framerate,
     cease = false,
-    numParticles = 6556;
+    numParticles = 656;
 let splitWidth = greatestFactors(numParticles).x; 
 let splitHeight = greatestFactors(numParticles).y;
 console.log(splitWidth, splitHeight);
