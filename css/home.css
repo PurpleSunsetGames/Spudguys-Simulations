@@ -17,6 +17,7 @@ a{
 
 }
 .sectionTitle{
+    font-size: calc(3vh + 3px);
     text-align: center;
     color: rgb(186, 193, 198);
 }
@@ -29,11 +30,11 @@ a{
     border-color: rgb(186, 193, 198);
 }
 .thumbImgContainer{
-    width: 45%;
+    width: 47%;
 }
 .itemTitle{
     color:rgb(186, 193, 198);
-    font-size: medium;
+    font-size: calc(2.5vh + 3px);
     margin: auto;
 }
 .itemDescriptionContainer{
@@ -41,7 +42,7 @@ a{
 }
 .itemDescription{
     margin-top: 3%;
-    font-size: small;
+    font-size: calc(2vh + 3px);
 }
 .orderFirst{
     order:1;
@@ -60,7 +61,7 @@ a{
     float:right
 }
 h1{    
-    font-size: 40px;
+    font-size: 6vh;
     text-shadow: 0px 1px 7px rgb(0, 0, 0);
     padding-top: 6%;
     margin:auto;
@@ -68,7 +69,7 @@ h1{
 }
 p{
     text-shadow: 0px 1px 7px rgb(0, 0, 0);
-    font-size: 14px;
+    font-size: 2vh;
     padding-top: 1%;
     padding-bottom: 6%;
     color: rgb(186, 193, 198);

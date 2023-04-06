@@ -2,7 +2,14 @@ a{
     color: rgb(50, 90, 200);
     
 }
+.orderFirst{
+    z-index: 1;
+}
+.orderSecond{
+    z-index: 0;
+}
 .leftMenu {
+    position: absolute;
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     width: 25%;
     float:left;
@@ -10,32 +17,38 @@ a{
 .numberInput{
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     width:20%;
+    min-width: 40px;
     background-color: rgb(99, 157, 177);
     border-style: solid;
     border-radius: 4px;
 }
 .rightMenu {
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    width: 25%;
-    float:right;
+    width: 100%;
+    float: left;
 }
 .otherCanvas{
-    margin: 0%;
-    width: 100%;
+    margin-right: 0%;
+    width: 100vw;
     height: auto;
 }
 .canvasContainer{
-    float:left;
+    margin-left:0%;
+    margin-right: 0%;
+    position: absolute;
     margin-left:0%;
     margin-right:0%;
-    width:50%;
-    height:50%;
+    width:95vw;
+    height:95vh;
 }
 .instructions{
+    padding: 0%;
+    margin: 0%;
+    margin-top: .1%;
     color:azure;
 }
 .information{
-    padding: 2%;
+    padding: 1%;
     margin: auto;
     color:rgb(99, 157, 177);
 }
@@ -57,16 +70,13 @@ a{
     background-color: rgb(69, 128, 149);
 }
 .buttonContainer{
-    float: left;
-    width:95%;
+    width: fit-content;
     border-radius: 3px;
 }
 .homeIcon{
-    /*Testing-texture-buffers */
     background: url('../sims/nbodygravity/iconassets/dsBuffer.bmp.png');
     height: 20px;
     width: 20px;
-    display: block;
     border-style: none;
     margin: 5px;
 }
@@ -74,11 +84,9 @@ a{
     opacity: .6;
 }
 .clearIcon{
-    /*Testing-texture-buffers */
     background: url('../sims/nbodygravity/iconassets/clear.png');
     height: 20px;
     width: 20px;
-    display: block;
     border-style: none;
     margin: 5px;
 }
@@ -86,11 +94,9 @@ a{
     opacity: .6;
 }
 .resetIcon{
-    /*Testing-texture-buffers */
     background: url('../sims/nbodygravity/iconassets/reset.png');
     height: 20px;
     width: 20px;
-    display: block;
     border-style: none;
     margin: 5px;
 }

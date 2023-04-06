@@ -27,8 +27,11 @@
             </a>
             <p class="itemDescription fon">
                 This is a simulation of an arbitrary number of gravitational
-                bodies interacting with each other in interesting and chaotic ways. To the left, you will see a screenshot
-                of the simulation in action, simulating nearly 100,000 particles at once.
+                bodies interacting with each other in interesting and chaotic ways. Here you will see a screenshot
+                of the simulation in action, simulating nearly 100,000 particles at once. <br>
+                It works by sending particle data to the gpu through a texture buffer for parallel processing, which
+                is much faster than simply writing a for-loop to consecutively go through each
+                and calculate each particle interaction. So far, this is my most efficient "real-time" gravity simulation.
             </p>
         </div>
     </div>

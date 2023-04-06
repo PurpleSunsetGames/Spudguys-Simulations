@@ -21,6 +21,46 @@ let displayRes = 2,
     framerate,
     cease = false,
     numParticles = 656;
+
+let currTouchDist = 0;
+let currTouchPos;
+let prevTouchPos;
+
+canvas2.addEventListener("touchmove", (e)=>{
+    if (e.targetTouches.length === 2) {
+        let diff = [(e.targetTouches[0].clientX - e.targetTouches[1].clientX), (e.targetTouches[0].clientY - e.targetTouches[1].clientY)];
+        let thisTouchDist = Math.sqrt((e.targetTouches[0].clientX - e.targetTouches[1].clientX)**2 + (e.targetTouches[0].clientY - e.targetTouches[1].clientY)**2);
+        windowOffset.z -= (thisTouchDist - currTouchDist)*windowOffset.z / 200;
+        currTouchDist = thisTouchDist;
+        currTouchPos = [e.targetTouches[1].clientX + diff[0]/2, e.targetTouches[1].clientY + diff[1]/2];
+
+        windowOffset.x += 2*windowOffset.z * (currTouchPos[0] - prevTouchPos[0]) / window.innerWidth;
+        windowOffset.y -= 2*windowOffset.z * (currTouchPos[1] - prevTouchPos[1]) / window.innerWidth;
+
+        prevTouchPos = currTouchPos;
+    }
+    else if (e.targetTouches.length === 1) {
+        currTouchPos = [e.targetTouches[0].clientX, e.targetTouches[0].clientY];
+
+        windowOffset.x += 2*windowOffset.z * (currTouchPos[0] - prevTouchPos[0]) / window.innerWidth;
+        windowOffset.y -= 2*windowOffset.z * (currTouchPos[1] - prevTouchPos[1]) / window.innerWidth;
+        prevTouchPos = currTouchPos;
+    }
+})
+canvas2.addEventListener("touchstart", (e)=>{
+    if (e.targetTouches.length === 2) {
+        let diff = [(e.targetTouches[0].clientX - e.targetTouches[1].clientX), (e.targetTouches[0].clientY - e.targetTouches[1].clientY)];
+        prevTouchPos = [e.targetTouches[1].clientX + diff[0]/2, e.targetTouches[1].clientY + diff[1]/2];
+        currTouchPos = prevTouchPos;
+        let thisTouchDist = Math.sqrt((e.targetTouches[0].clientX - e.targetTouches[1].clientX)**2 + (e.targetTouches[0].clientY - e.targetTouches[1].clientY)**2);
+        currTouchDist = thisTouchDist;
+    }
+    else if (e.targetTouches.length === 1) {
+        prevTouchPos = [e.targetTouches[0].clientX, e.targetTouches[0].clientY];
+        currTouchPos = prevTouchPos;
+    }
+})
+
 let splitWidth = greatestFactors(numParticles).x; 
 let splitHeight = greatestFactors(numParticles).y;
 console.log(splitWidth, splitHeight);
@@ -279,7 +319,8 @@ function mainGl(canvas) {
     drawLoop();    
     function drawLoop() {
         thisTime = performance.now();
-        framerateDisplay.innerHTML = "Framerate (fps): " + Math.round(10000 / (thisTime - lastTime))/10;
+
+        framerateDisplay.innerHTML = "Framerate (fps): " + Math.round(1000 / (thisTime - lastTime));
         // render to target texture by binding the frame buffer
         if (animating) {
             gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
@@ -372,7 +413,7 @@ function drawDotsGPU(data,gl,prog,colors, averagePosCenter) {
     let newdata = [];
     let i = 0;
     while (i<data.length) {
-        newdata.push(((data[i])) / canvas2.width, ((data[i + 1])) / canvas2.width);
+        newdata.push(((data[i])) / canvas2.width, ((data[i + 1])) / canvas2.height);
         i += 4;
     }
     // Add some points to the position buffer
@@ -385,15 +426,18 @@ function drawDotsGPU(data,gl,prog,colors, averagePosCenter) {
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.DYNAMIC_COPY);
     
     // Draw the point
-    canvas2.width = displayRes*Math.min(window.innerWidth, window.innerHeight);
-    canvas2.height = displayRes*Math.min(window.innerWidth, window.innerHeight);
+    canvas2.style.width = String(window.innerWidth - 20) + 'px';
+    canvas2.style.height = String(window.innerHeight - 20) + 'px';
+    
+    canvas2.width = window.innerWidth - 20;
+    canvas2.height = window.innerHeight - 20;
 
     gl.uniform3f(windowOffsetLocation, windowOffset.x, windowOffset.y, windowOffset.z);
     gl.uniform1f(u_PointSize, 1/windowOffset.z);
 
-    gl.viewport(0, 0, canvas2.width, canvas2.height);
+    gl.viewport(0, 0, window.innerWidth, window.innerHeight);
 
-    gl.clearColor(0, 0, 0, 1);
+    gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.POINTS, 0, positions.length / 4);
 }
