@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="HandheldFriendly" content="true" />
+
     <meta name="keywords" content="gravity, physics, HTML, CSS, JavaScript">
     <meta name="author" content="The Spudguy">
     <meta name="description" content="A gravity simulation for an arbitrary number of bodies.">
@@ -9,7 +12,7 @@
     <title>N-body Gravity Sim</title>
     <link rel="stylesheet" href="../../css/nbodygravitysim.css">
 </head>
-<body bgcolor="#000000">
+<body bgcolor="#000000" style="touch-action: none;">
     <canvas id="mainCanvas" height="0" width="0"></canvas>
     <div class="canvasContainer flr orderSecond">
         <canvas class="otherCanvas orderSecond" id="otherCanvas" width="400" height="300"></canvas>
@@ -18,7 +21,7 @@
         <div style="margin-left: 5px;">
             <p class="instructions">Press Space to pause/unpause the simulation</p>
             <p class="instructions">Scroll to zoom and drag to pan</p>
-            <a href="../../" class="orderFirst">Home</a>
+            <a href="../../" class="orderFirst" style="padding-left:3%;">Home</a>
         </div>
         <p class="information orderFirst" id="numParticles">Number of Particles: <input type="number" min="0" step="1" value="512" id="particleQuantityInput" class="numberInput fon orderFirst" onkeypress="return(event.charCode != 8 ** event.charCode ==0 || (event.charCode >= 48 && event.charCode <=57))"></input></p>
         <p class="information orderFirst" id="framerate">Framerate (fps): </p>
