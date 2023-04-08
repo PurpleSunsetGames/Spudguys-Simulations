@@ -13,22 +13,32 @@
     <link rel="stylesheet" href="../../css/nbodygravitysim.css">
 </head>
 <body bgcolor="#000000" style="touch-action: none;">
-    <canvas id="mainCanvas" height="0" width="0"></canvas>
+    <canvas id="canvas" height="0" width="0"></canvas>
     <div class="canvasContainer flr orderSecond">
-        <canvas class="otherCanvas orderSecond" id="otherCanvas" width="400" height="300"></canvas>
+        <canvas class="otherCanvas orderSecond" id="canvas2" width="400" height="300"></canvas>
     </div>
     <div class="leftMenu orderFirst">
-        <div style="margin-left: 5px;">
-            <p class="instructions">Press Space to pause/unpause the simulation</p>
-            <p class="instructions">Scroll to zoom and drag to pan</p>
-            <a href="../../" class="orderFirst" style="padding-left:3%;">Home</a>
-        </div>
-        <p class="information orderFirst" id="numParticles">Number of Particles: <input type="number" min="0" step="1" value="512" id="particleQuantityInput" class="numberInput fon orderFirst" onkeypress="return(event.charCode != 8 ** event.charCode ==0 || (event.charCode >= 48 && event.charCode <=57))"></input></p>
-        <p class="information orderFirst" id="framerate">Framerate (fps): </p>
-        <div class="buttonContainer orderFirst"> 
-            <button class='homeIcon orderFirst fll' id="homeIcon"></button>
-            <button class="clearIcon orderFirst fll" id="clearButton"></button>
-            <button class="resetIcon orderFirst fll" id="resetButton"></button>                
+        <div style="overflow-y: scroll; overflow-x:auto; height: 100%; width:100%; direction: rtl;">
+            <div style="margin-left: 5px;" class="flr dl">
+                <p class="instructions">Press Space to pause/unpause the simulation</p>
+                <p class="instructions">Scroll to zoom and drag to pan</p>
+                <a href="../../" title="Return to Home Menu" class="orderFirst" style="padding-left:1%;">Home</a>
+            </div>
+            <p class="information orderFirst dl" id="numParticlesDisplay">Number of Particles: <input type="number" min="0" step="1" value="512" id="particleQuantityInput" class="numberInput fon orderFirst" onkeypress="return(event.charCode != 8 ** event.charCode ==0 || (event.charCode >= 48 && event.charCode <=57))"></input></p>
+            <p class="information orderFirst dl" id="framerateDisplay">Framerate (fps): </p>
+            <div class="buttonContainer orderFirst fll"> 
+                <button class='homeIcon orderFirst dl fll' id="homeIcon" title="Default Zoom"></button>
+                <button class="clearIcon orderFirst dl fll" id="clearButton" title="Clear Particles"></button>
+                <button class="resetIcon orderFirst dl fll" id="resetButton" title="Reset"></button>      
+            </div>
+            <div class="sliderContainer dl ltr">
+                <input type="range" id="sizeSlider" class="slider fll" min="1" max="100" value="10"></input>
+                <p class="information sliderDesc" id="sizeSliderDisplay">Particle Size: </p>
+            </div>
+            <div class="sliderContainer dl ltr">
+                <input type="range" id="GSlider" class="slider fll" min=".0001" max="1" value=".01" step=".0001"></input>
+                <p class="information sliderDesc" id="GSliderDisplay">G: </p>
+            </div>
         </div>
     </div>
     <script src="fragmentShader.glsl" type="notjs"></script>

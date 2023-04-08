@@ -8,13 +8,15 @@ a{
 .orderSecond{
     z-index: 0;
 }
+.dl {
+    direction: ltr
+}
 .leftMenu {
     position: absolute;
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
-    width:fit-content;
-    min-width:200px;
-    float:left;
-    border-radius: 15px;
+    width: 300px;
+    height: 200px;
+    border-bottom-right-radius: 15px;
     border-style: solid;
     border-width: 1px;
     border-color:aliceblue
@@ -28,9 +30,9 @@ a{
     border-radius: 4px;
 }
 .rightMenu {
+    direction: ltr;
     font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     width: 100%;
-    float: left;
 }
 .otherCanvas{
     margin-right: 0%;
@@ -47,14 +49,13 @@ a{
     height:95vh;
 }
 .instructions{
-    margin-left: 3%;
+    margin-left: 2%;
     color:azure;
 }
 .information{
     margin-left: 3%;
     margin-bottom: 1%;
     margin-top:1%;
-    padding: 1%;
     color:rgb(99, 157, 177);
 }
 .pressOnce{
@@ -75,8 +76,8 @@ a{
     background-color: rgb(69, 128, 149);
 }
 .buttonContainer{
-    width: fit-content;
-    border-radius: 3px;
+    width: 100%;
+    margin-left:2%;
 }
 .homeIcon{
     background: url('../sims/nbodygravity/iconassets/dsBuffer.bmp.png');
@@ -107,4 +108,42 @@ a{
 }
 .resetIcon:hover{
     opacity: .6;
+}
+.sliderContainer{
+    width: 98%;
+    margin-left: 2%;
+}
+.slider{
+    margin-top: 10px;
+    width:55%;
+    -webkit-appearance: none;
+    background-color: rgb(69, 128, 149);
+    border-radius: 5px;
+    height:5px
+}
+.sliderDesc{
+    float:left;
+    width:40%;
+}
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 10px;
+    border-radius: 5px; 
+    background: #33b;
+    cursor: pointer;
+    border-color: black;
+    border-width: 1px;
+    border-style: solid;
+}  
+.slider::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #33b;
+    cursor: pointer;
+    border-color: black;
+    border-width: 1px;
+    border-style: solid;
 }

@@ -1,12 +1,21 @@
 'use strict';
-let canvas = document.getElementById("mainCanvas");
-let canvas2 = document.getElementById("otherCanvas");
-let numParticlesDisplay = document.getElementById("numParticles"); 
-let framerateDisplay = document.getElementById("framerate");
-let homeIcon = document.getElementById("homeIcon");
-let resetButton = document.getElementById("resetButton");
-let clearButton = document.getElementById("clearButton");
-let particleQuantityInput = document.getElementById("particleQuantityInput");
+
+let listofIds = [
+    "canvas", 
+    "canvas2", 
+    "numParticlesDisplay", 
+    "framerateDisplay", 
+    "homeIcon",
+    "resetButton",
+    "clearButton",
+    "particleQuantityInput",
+    "sizeSlider",
+    "sizeSliderDisplay",
+    "GSlider",
+    "GSliderDisplay"
+];
+
+[listofIds].map(e => window[e] = document.getElementById(e))
 
 let vertexShaderSource = "";
 let fragmentShaderSource = "";
@@ -15,19 +24,38 @@ let displayRes = 2,
     windowOffset = {x:0, y:0, z:.1},
     defaultWindowOffset = {x:0, y:0, z:.1},
     confine = 0,
-    G = .01,
+    G = GSlider.value,
     mouseDown,
     animating=1,
     framerate,
     cease = false,
-    numParticles = 656;
+    numParticles = 60,
+    pointSize = sizeSlider.value / 5;
 
+GSliderDisplay.innerHTML = "G: " + Math.round(100*G)/100;
+sizeSliderDisplay.innerHTML = "Particle Size: " + Math.ceil(pointSize);
 let currTouchDist = 0;
 let currTouchPos;
 let prevTouchPos;
+let touchNum = 0;
 
+sizeSlider.addEventListener("input", (e)=>{
+    pointSize = sizeSlider.value / 5;
+    sizeSliderDisplay.innerHTML = "Particle Size: " + Math.ceil(pointSize);
+});
+GSlider.addEventListener("input", (e)=>{
+    G = GSlider.value;
+    GSliderDisplay.innerHTML = "G: " + Math.round(10000*G)/10000;
+});
+
+canvas2.addEventListener("touchend", (e)=>{
+    prevTouchPos = [0,0];
+    currTouchPos = [0,0];
+    currTouchDist = 0;
+    touchNum=0;
+})
 canvas2.addEventListener("touchmove", (e)=>{
-    if (e.targetTouches.length === 2) {
+    if (e.targetTouches.length === 2 && touchNum === 2) {
         let diff = [(e.targetTouches[0].clientX - e.targetTouches[1].clientX), (e.targetTouches[0].clientY - e.targetTouches[1].clientY)];
         let thisTouchDist = Math.sqrt((e.targetTouches[0].clientX - e.targetTouches[1].clientX)**2 + (e.targetTouches[0].clientY - e.targetTouches[1].clientY)**2);
         windowOffset.z -= (thisTouchDist - currTouchDist)*windowOffset.z / 200;
@@ -39,7 +67,7 @@ canvas2.addEventListener("touchmove", (e)=>{
 
         prevTouchPos = currTouchPos;
     }
-    else if (e.targetTouches.length === 1) {
+    else if (e.targetTouches.length === 1 && touchNum === 1) {
         currTouchPos = [e.targetTouches[0].clientX, e.targetTouches[0].clientY];
 
         windowOffset.x += 2*windowOffset.z * (currTouchPos[0] - prevTouchPos[0]) / window.innerWidth;
@@ -49,6 +77,7 @@ canvas2.addEventListener("touchmove", (e)=>{
 })
 canvas2.addEventListener("touchstart", (e)=>{
     if (e.targetTouches.length === 2) {
+        touchNum = 2;
         let diff = [(e.targetTouches[0].clientX - e.targetTouches[1].clientX), (e.targetTouches[0].clientY - e.targetTouches[1].clientY)];
         prevTouchPos = [e.targetTouches[1].clientX + diff[0]/2, e.targetTouches[1].clientY + diff[1]/2];
         currTouchPos = prevTouchPos;
@@ -56,6 +85,7 @@ canvas2.addEventListener("touchstart", (e)=>{
         currTouchDist = thisTouchDist;
     }
     else if (e.targetTouches.length === 1) {
+        touchNum = 1;
         prevTouchPos = [e.targetTouches[0].clientX, e.targetTouches[0].clientY];
         currTouchPos = prevTouchPos;
     }
@@ -203,6 +233,45 @@ function mainGl(canvas) {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         if(r){return data}
     }
+    function addParticleData(data, r=false){
+        if (data.type === Float32Array){
+            data = Array.from(data);
+            console.log("F")
+        }
+        splitWidth = greatestFactors(numParticles).x; 
+        splitHeight = greatestFactors(numParticles).y;
+        gl.bindTexture(gl.TEXTURE_2D, inputTexture);
+        if (data.length/4 < numParticles) {
+            for (let i=data.length/4; i<numParticles; i++) {
+                randAngle = (Math.random() - .5) * Math.PI * 2;
+                randRadius = (Math.random()**3) * radius + 20;
+                data.push(Math.cos(randAngle) * randRadius, 
+                            Math.sin(randAngle) * randRadius, 
+                            -(Math.sin(randAngle)/randRadius**.333) * startRotVel, 
+                            (Math.cos(randAngle)/randRadius**.333) * startRotVel);
+                colors.push(Math.cos(Math.PI*randRadius/radius)**2 + .1, 0, Math.sin(3+Math.PI*randRadius/radius)**2 + .1, 1);
+            }
+        }
+        else if (data.length/4 > numParticles) {
+            for (let i=data.length/4; i<numParticles; i++) {
+                randAngle = (Math.random() - .5) * Math.PI * 2;
+                randRadius = (Math.random()**3) * radius + 20;
+                data.pop();data.pop();data.pop();data.pop();
+                colors.pop();colors.pop();colors.pop();colors.pop();
+            }
+            data.length = numParticles * 4;
+            colors.length = numParticles * 4;
+        }
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
+            splitWidth, splitHeight, 0,
+            gl.RGBA, gl.FLOAT, new Float32Array(data));
+        
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        if(r){return data}
+    }
     function clearParticleData(){
         gl.bindTexture(gl.TEXTURE_2D, inputTexture);
 
@@ -264,7 +333,7 @@ function mainGl(canvas) {
     gl.uniform1i(inputTextureUniformLocation, inde)
 
     function resetTarget(){
-        regenParticleData()
+        addParticleData(outData, false);
 
         gl.bindTexture(gl.TEXTURE_2D, inputTexture);
         let inputTextureUniformLocation = gl.getUniformLocation(program, "u_texture");
@@ -336,20 +405,17 @@ function mainGl(canvas) {
 
             // finally, retrieve data from the fb and send it to outData as a js array
             if(needRegenBuffer){
-                outData = regenParticleData(true);
+                outData = addParticleData(outData, true);
             }
-            outData = Array.from(outData);
             needRegenBuffer = false;
             if(outData.length/4 != numParticles){
+                outData = Array.from(outData);
                 needRegenBuffer = true
             }
             if(needRegenBuffer){
-                outData.length = numParticles * 4;
-                colors.length = numParticles * 4;
                 resetTarget();
-                console.log("F");
+                outData = new Float32Array(outData);
             }
-            outData = new Float32Array(outData);
 
             // use that js array to update the data of the input texture
             gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
@@ -367,14 +433,12 @@ function mainGl(canvas) {
 }
 function greatestFactors(x) {
     let a=1;
-    let diff=x-1;
     let found1=1;
     let found2=x;
     while (a<Math.sqrt(x)){
         if (Number.isInteger(x/a)){
             found1=a;
             found2=x/a;
-            diff = found2-found1;
         }
         a++;
     }
@@ -433,13 +497,13 @@ function drawDotsGPU(data,gl,prog,colors, averagePosCenter) {
     canvas2.height = window.innerHeight - 20;
 
     gl.uniform3f(windowOffsetLocation, windowOffset.x, windowOffset.y, windowOffset.z);
-    gl.uniform1f(u_PointSize, 1/windowOffset.z);
+    gl.uniform1f(u_PointSize, pointSize/windowOffset.z);
 
     gl.viewport(0, 0, window.innerWidth, window.innerHeight);
 
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.POINTS, 0, positions.length / 4);
+    gl.drawArrays(gl.POINTS, 0, positions.length / 2);
 }
 
 function dotsProgramGPU(gl) {
@@ -496,7 +560,7 @@ function dotsProgramGPU(gl) {
     const u_PointSize = gl.getUniformLocation(prog, 'u_PointSize');
     
     // Set uniform value
-    gl.uniform1f(u_PointSize, 4);
+    gl.uniform1f(u_PointSize, pointSize);
     
     // Get attribute locations
     const a_PositionIndex = gl.getAttribLocation(prog, 'a_Position');
