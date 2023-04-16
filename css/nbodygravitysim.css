@@ -50,13 +50,23 @@ a{
 }
 .instructions{
     margin-left: 2%;
+    margin-bottom: 1%;
     color:azure;
+}
+.noSelect{
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 .information{
     margin-left: 3%;
     margin-bottom: 1%;
     margin-top:1%;
     color:rgb(99, 157, 177);
+}
+.blu{
+    color:rgb(50, 90, 200);
 }
 .pressOnce{
     color:rgb(9, 17, 17);
@@ -76,8 +86,13 @@ a{
     background-color: rgb(69, 128, 149);
 }
 .buttonContainer{
-    width: 100%;
+    width: fit-content;
     margin-left:2%;
+    margin-right: 60%;
+    border-radius: 5px;
+    border-width: 1px;
+    border-style: solid;
+    border-color: aliceblue;
 }
 .homeIcon{
     background: url('../sims/nbodygravity/iconassets/dsBuffer.bmp.png');

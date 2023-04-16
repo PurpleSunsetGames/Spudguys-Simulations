@@ -3,39 +3,30 @@
 let listofIds = [
     "canvas", 
     "canvas2", 
-    "numParticlesDisplay", 
     "framerateDisplay", 
-    "homeIcon",
-    "resetButton",
-    "clearButton",
-    "particleQuantityInput",
     "sizeSlider",
     "sizeSliderDisplay",
     "GSlider",
     "GSliderDisplay",
-    "newVelXSlider",
-    "newVelXSliderDisplay",
-    "newVelYSlider",
-    "newVelYSliderDisplay"
 ];
 
 [listofIds].map(e => window[e] = document.getElementById(e));
 
 let vertexShaderSource = "";
 let fragmentShaderSource = "";
-console.log(particleQuantityInput);
 let displayRes = 2,
-    windowOffset = {x:0, y:0, z:1},
-    defaultWindowOffset = {x:0, y:0, z:1},
+    windowOffset = {x:0, y:-1, z:1},
+    defaultWindowOffset = {x:0, y:-1, z:1},
     confine = 0,
     G = GSlider.value,
     mouseDown,
     animating=1,
     framerate,
     cease = false,
-    numParticles = 60,
     pointSize = sizeSlider.value / 5;
-let newVelX=0, newVelY=0;
+
+let blockWidth=90, blockHeight=90;
+
 GSliderDisplay.innerHTML = "G: " + Math.round(100*G)/100;
 sizeSliderDisplay.innerHTML = "Particle Size: " + Math.ceil(pointSize);
 let currTouchDist = 0;
@@ -50,14 +41,6 @@ sizeSlider.addEventListener("input", (e)=>{
 GSlider.addEventListener("input", (e)=>{
     G = GSlider.value;
     GSliderDisplay.innerHTML = "G: " + Math.round(10000*G)/10000;
-});
-newVelXSlider.addEventListener("input", (e)=>{
-    newVelX = newVelXSlider.value;
-    newVelXSliderDisplay.innerHTML = "X Velocity: " + newVelX;
-});
-newVelYSlider.addEventListener("input", (e)=>{
-    newVelY = newVelYSlider.value;
-    newVelYSliderDisplay.innerHTML = "Y Velocity: " + newVelY;
 });
 
 canvas2.addEventListener("touchend", (e)=>{
@@ -104,11 +87,10 @@ canvas2.addEventListener("touchstart", (e)=>{
     }
 })
 
-let splitWidth = greatestFactors(numParticles).x; 
-let splitHeight = greatestFactors(numParticles).y;
+let splitWidth = blockWidth;
+let splitHeight = blockHeight;
 console.log(splitWidth, splitHeight);
 
-//alert("This program currently bugs out for particle quantities greater than 512.")
 // Adding interaction for the uniforms
 canvas2.addEventListener("wheel", (e)=>{
     windowOffset.z += e.deltaY*windowOffset.z / 1000;
@@ -130,9 +112,6 @@ window.addEventListener("keydown", (e)=>{
 window.addEventListener('mouseup', 
 () => {mouseDown = false}
 );
-particleQuantityInput.addEventListener("input",function(){
-    numParticles = Number(particleQuantityInput.value);
-})
 homeIcon.addEventListener("click",function(){
     windowOffset.x = defaultWindowOffset.x;
     windowOffset.y = defaultWindowOffset.y;
@@ -215,70 +194,19 @@ function mainGl(canvas) {
     let inputTextureUniformLocation = gl.getUniformLocation(program, "u_texture");
 
     let data = [];
-    const startRotVel = .5;
-    let radius = 200;
-    let randAngle;
-    let randRadius;
     let colors = [];
     function regenParticleData(r=false){
-        splitWidth = greatestFactors(numParticles).x; 
-        splitHeight = greatestFactors(numParticles).y;
+        splitWidth = blockWidth; 
+        splitHeight = blockHeight;
         gl.bindTexture(gl.TEXTURE_2D, inputTexture);
 
         data = [];
         colors = [];
-        for (let i=0; i<numParticles; i++) {
-            randAngle = (Math.random() - .5) * Math.PI * 2;
-            randRadius = (Math.random()**3) * radius + 20;
-            data.push(Math.cos(randAngle) * randRadius, 
-                        Math.sin(randAngle) * randRadius, 
-                        -(Math.sin(randAngle)/randRadius**.333) * startRotVel, 
-                        (Math.cos(randAngle)/randRadius**.333) * startRotVel);
-            colors.push(Math.cos(Math.PI*randRadius/radius)**2 + .1, 0, Math.sin(3+Math.PI*randRadius/radius)**2 + .1, 1);
-        }
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
-            splitWidth, splitHeight, 0,
-            gl.RGBA, gl.FLOAT, new Float32Array(data));
-        
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        if(r){return data}
-    }
-    function addParticleData(data, r=false, newData=[]){
-        if(data.type === Float32Array) {
-            data = Array.from(data);
-            console.log("F")
-        }
-        splitWidth = greatestFactors(numParticles).x; 
-        splitHeight = greatestFactors(numParticles).y;
-        gl.bindTexture(gl.TEXTURE_2D, inputTexture);
-        if (data.length/4 < numParticles) {
-            if (newData.length>0 && Number.isInteger(newData.length/4)){
-                data.push(newData[0], newData[1], newData[2], newData[3]);
-                colors.push(Math.random(), Math.random(), Math.random(), 1);
+        for (let i2=0; i2<blockWidth; i2++) {
+            for (let i=0; i<blockHeight; i++) {
+                data.push((i2-blockWidth/2)*10, (i)*10 + 49, 0, 0);
+                colors.push(i2/blockWidth,.2,i/blockHeight, 1);
             }
-            for (let i=data.length/4; i<numParticles; i++) {
-                console.log("a");
-                randAngle = (Math.random() - .5) * Math.PI * 2;
-                randRadius = (Math.random()**3) * radius + 20;
-                data.push(Math.cos(randAngle) * randRadius, 
-                            Math.sin(randAngle) * randRadius, 
-                            -(Math.sin(randAngle)/randRadius**.333) * startRotVel, 
-                            (Math.cos(randAngle)/randRadius**.333) * startRotVel);
-                colors.push(Math.cos(Math.PI*randRadius/radius)**2 + .1, 0, Math.sin(3+Math.PI*randRadius/radius)**2 + .1, 1);
-            }
-        }
-        else if (data.length/4 > numParticles) {
-            for (let i=data.length/4; i<numParticles; i++) {
-                randAngle = (Math.random() - .5) * Math.PI * 2;
-                randRadius = (Math.random()**3) * radius + 20;
-                data.pop();data.pop();data.pop();data.pop();
-                colors.pop();colors.pop();colors.pop();colors.pop();
-            }
-            data.length = numParticles * 4;
-            colors.length = numParticles * 4;
         }
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
             splitWidth, splitHeight, 0,
@@ -351,8 +279,6 @@ function mainGl(canvas) {
     gl.uniform1i(inputTextureUniformLocation, inde)
 
     function resetTarget(){
-        addParticleData(outData, false);
-
         gl.bindTexture(gl.TEXTURE_2D, inputTexture);
         let inputTextureUniformLocation = gl.getUniformLocation(program, "u_texture");
 
@@ -384,7 +310,7 @@ function mainGl(canvas) {
     /// ------------------------------- ///
 
     // Everything should be bound properly now. Time to start actually rendering stuff to the texture
-    let outData = new Float32Array(numParticles*4);
+    let outData = new Float32Array(blockWidth*blockHeight*4);
 
     let ctx = canvas2.getContext("webgl2");
     let dotsProgram = dotsProgramGPU(ctx);
@@ -403,36 +329,18 @@ function mainGl(canvas) {
     let lastTime;
     let thisTime;
     let needRegenBuffer = false;
+    //let cyx = canvas2.getContext("2d");
 
     canvas2.addEventListener("click", (e)=>{
         if (e.shiftKey) {
-            numParticles++;
-            outData = Array.from(outData);
             let rect = e.target.getBoundingClientRect();
             let x = e.clientX - rect.left;
             let y = e.clientY + rect.top;
             x = (x/window.innerWidth) * rect.width;
             y = (y/window.innerHeight) * rect.height;
-            console.log(x, y, rect.width, windowOffset);
-            outData = new Float32Array(addParticleData(outData, true, [((x-rect.width/2)*windowOffset.z*2)-windowOffset.x*rect.width, (-(y-rect.height/2))*windowOffset.z*2 - windowOffset.y*rect.height, newVelX, newVelY]));
-            resetTarget();
+            // [((x-rect.width/2)*windowOffset.z*2)-windowOffset.x*rect.width, (-(y-rect.height/2))*windowOffset.z*2 - windowOffset.y*rect.height, 0, 0]
         }
     });
-    canvas2.addEventListener("dblclick", (e)=>{
-        if (window.innerWidth < window.innerHeight) {
-            numParticles++;
-            outData = Array.from(outData);
-            let rect = e.target.getBoundingClientRect();
-            let x = e.clientX - rect.left;
-            let y = e.clientY + rect.top;
-            x = (x/window.innerWidth) * rect.width;
-            y = (y/window.innerHeight) * rect.height;
-            console.log(x, y, rect.width, windowOffset);
-            outData = new Float32Array(addParticleData(outData, true, [((x-rect.width/2)*windowOffset.z*2)-windowOffset.x*rect.width, (-(y-rect.height/2))*windowOffset.z*2 - windowOffset.y*rect.height, 0, 0]));
-            resetTarget();
-        }
-    });
-
     drawLoop();    
     function drawLoop() {
         thisTime = performance.now();
@@ -453,7 +361,7 @@ function mainGl(canvas) {
 
             // finally, retrieve data from the fb and send it to outData as a js array
             needRegenBuffer = false;
-            if(outData.length/4 != numParticles){
+            if(outData.length/4 != blockHeight*blockWidth){
                 outData = Array.from(outData);
                 needRegenBuffer = true
             }
@@ -467,10 +375,12 @@ function mainGl(canvas) {
                         splitWidth, splitHeight, 0,
                         format, typel, outData);
         }
-        updateDisplayValues();
         // draw dots on canvas based on that data
         drawDotsGPU(outData, ctx, dotsProgram, colors, averagePosCenter);
         lastTime = thisTime;
+        //cyx.beginPath();
+        //cyx.moveTo(0,100);
+        //cyx.lineTo(1000,100);
         if (!cease) {
             requestAnimationFrame(drawLoop);
         }
@@ -488,9 +398,6 @@ function greatestFactors(x) {
         a++;
     }
     return {x:Number(found1), y:Number(found2)};
-}
-function updateDisplayValues() {
-    particleQuantityInput.value=numParticles;
 }
 const TAU = 2*Math.PI;
 

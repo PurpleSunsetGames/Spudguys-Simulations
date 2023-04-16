@@ -22,10 +22,8 @@
             <div style="margin-left: 5px;" class="flr dl">
                 <p class="instructions">Press Space to pause/unpause the simulation</p>
                 <p class="instructions noSelect">Scroll to zoom and drag to pan</p>
-                <p class="instructions noSelect">Shift-click (double click on mobile) to add a new particle</p>
                 <a href="../../" title="Return to Home Menu" class="orderFirst noSelect" style="padding-left:1%;">Home</a>
             </div>
-            <p class="information orderFirst dl noSelect" id="numParticlesDisplay">Number of Particles: <input type="number" min="0" step="1" value="512" id="particleQuantityInput" class="numberInput fon orderFirst" onkeypress="return(event.charCode != 8 ** event.charCode ==0 || (event.charCode >= 48 && event.charCode <=57))"></input></p>
             <p class="information orderFirst dl noSelect" id="framerateDisplay">Framerate (fps): </p>
             <div class="buttonContainer orderFirst fll"> 
                 <button class='homeIcon orderFirst dl fll' id="homeIcon" title="Default Zoom"></button>
@@ -39,19 +37,6 @@
             <div class="sliderContainer dl ltr">
                 <input type="range" id="GSlider" class="slider fll" min=".0001" max="1" value=".01" step=".0001"></input>
                 <p class="information sliderDesc blu" id="GSliderDisplay">G: </p>
-            </div>
-            <div class="sliderContainer dl ltr">
-                <p class="instructions orderFirst dl noSelect">New particle settings</p>
-            </div>
-            <div class="sliderContainer dl ltr">
-                <input type="range" id="newVelXSlider" class="slider fll" min="-1" max="1" value="0" step=".01"></input>
-                <p class="information sliderDesc blu" id="newVelXSliderDisplay">X Velocity: 0.0</p>
-            </div>
-            <div class="sliderContainer dl ltr">
-                <input type="range" id="newVelYSlider" class="slider fll" min="-1" max="1" value="0" step=".01"></input>
-                <p class="information sliderDesc blu" id="newVelYSliderDisplay">Y Velocity: 0.0</p>
-            </div>
-            <div class="sliderContainer dl ltr">
             </div>
         </div>
     </div>
