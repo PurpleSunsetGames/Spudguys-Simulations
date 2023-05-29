@@ -6,15 +6,17 @@
 
     <meta name="keywords" content="gravity, physics, HTML, CSS, JavaScript">
     <meta name="author" content="The Spudguy">
-    <meta name="description" content="A gravity simulation for an arbitrary number of bodies.">
+    <meta name="description" content="A softbody simulation.">
     
     <meta charset="utf-8">
-    <title>N-body Gravity Sim</title>
+    <title>Softbody Sim</title>
     <link rel="stylesheet" href="../../css/nbodygravitysim.css">
 </head>
 <body bgcolor="#000000" style="touch-action: none;">
     <canvas id="canvas" height="0" width="0"></canvas>
     <div class="canvasContainer flr orderSecond">
+        <canvas class="nonGLCanvas" id="nonGLCanvas"></canvas>
+
         <canvas class="otherCanvas orderSecond" id="canvas2" width="400" height="300"></canvas>
     </div>
     <div class="leftMenu orderFirst noSelect">
@@ -37,6 +39,14 @@
             <div class="sliderContainer dl ltr">
                 <input type="range" id="GSlider" class="slider fll" min=".0001" max="1" value=".01" step=".0001"></input>
                 <p class="information sliderDesc blu" id="GSliderDisplay">G: </p>
+            </div>
+            <div class="sliderContainer dl ltr">
+                <input type="range" id="dampFactorSlider" class="slider fll" min="0" max="1" value=".05" step=".001"></input>
+                <p class="information sliderDesc blu" id="dampFactorSliderDisplay">Damping: .05</p>
+            </div>
+            <div class="sliderContainer dl ltr">
+                <input type="range" id="springStrengthSlider" class="slider fll" min="0" max="1" value=".75" step=".001"></input>
+                <p class="information sliderDesc blu" id="springStrengthSliderDisplay">Spring Force: .75</p>
             </div>
         </div>
     </div>

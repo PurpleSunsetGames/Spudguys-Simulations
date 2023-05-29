@@ -3,11 +3,14 @@
 let listofIds = [
     "canvas", 
     "canvas2", 
+    "nonGLCanvas",
     "framerateDisplay", 
     "sizeSlider",
     "sizeSliderDisplay",
     "GSlider",
     "GSliderDisplay",
+    "dampFactorSlider",
+    "dampFactorSliderDisplay",
 ];
 
 [listofIds].map(e => window[e] = document.getElementById(e));
@@ -23,9 +26,13 @@ let displayRes = 2,
     animating=1,
     framerate,
     cease = false,
-    pointSize = sizeSlider.value / 5;
+    pointSize = sizeSlider.value / 5,
+    dampFactor = .01,
+    springStrength = .75;
+let listOfObjects = [
 
-let blockWidth=90, blockHeight=90;
+]
+let blockWidth=30, blockHeight=30;
 
 GSliderDisplay.innerHTML = "G: " + Math.round(100*G)/100;
 sizeSliderDisplay.innerHTML = "Particle Size: " + Math.ceil(pointSize);
@@ -41,6 +48,14 @@ sizeSlider.addEventListener("input", (e)=>{
 GSlider.addEventListener("input", (e)=>{
     G = GSlider.value;
     GSliderDisplay.innerHTML = "G: " + Math.round(10000*G)/10000;
+});
+dampFactorSlider.addEventListener("input", (e)=>{
+    dampFactor = dampFactorSlider.value;
+    dampFactorSliderDisplay.innerHTML = "Damping: " + Math.round(100*dampFactor)/100;
+});
+springStrengthSlider.addEventListener("input", (e)=>{
+    springStrength = springStrengthSlider.value;
+    springStrengthSliderDisplay.innerHTML = "Strength: " + Math.round(100*springStrength)/100;
 });
 
 canvas2.addEventListener("touchend", (e)=>{
@@ -189,6 +204,22 @@ function mainGl(canvas) {
     /// ------------------------------- ///
 
     // Make and use the input texture
+    function newTexture(inTex, name, dat) {
+        gl.bindTexture(gl.TEXTURE_2D, inTex);
+        let nameLocation = gl.getUniformLocation(program, name);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
+            splitWidth, splitHeight, 0,
+            gl.RGBA, gl.FLOAT, new Float32Array(dat));
+        
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+        gl.bindTexture(gl.TEXTURE_2D, inTex);
+        gl.uniform1i(nameLocation, inde);
+    }
+
     let inputTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, inputTexture);
     let inputTextureUniformLocation = gl.getUniformLocation(program, "u_texture");
@@ -202,10 +233,10 @@ function mainGl(canvas) {
 
         data = [];
         colors = [];
-        for (let i2=0; i2<blockWidth; i2++) {
-            for (let i=0; i<blockHeight; i++) {
-                data.push((i2-blockWidth/2)*10, (i)*10 + 49, 0, 0);
-                colors.push(i2/blockWidth,.2,i/blockHeight, 1);
+        for (let i2=0; i2<splitWidth; i2++) {
+            for (let i=0; i<splitHeight; i++) {
+                data.push((i2-splitWidth/2)*10, (i)*10 + 49, 0, 0);
+                colors.push(i2/splitWidth,.2,i/splitHeight, 1);
             }
         }
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
@@ -226,7 +257,6 @@ function mainGl(canvas) {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
             0, 0, 0,
             gl.RGBA, gl.FLOAT, new Float32Array(data));
-        numParticles = 0;
         splitWidth = 0;
         splitHeight= 0;
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -276,7 +306,7 @@ function mainGl(canvas) {
     let inde = 5;
     gl.activeTexture(gl.TEXTURE0+inde);
     gl.bindTexture(gl.TEXTURE_2D, inputTexture);
-    gl.uniform1i(inputTextureUniformLocation, inde)
+    gl.uniform1i(inputTextureUniformLocation, inde);
 
     function resetTarget(){
         gl.bindTexture(gl.TEXTURE_2D, inputTexture);
@@ -292,7 +322,7 @@ function mainGl(canvas) {
         gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
         gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
                         splitWidth, splitHeight, border,
-                        format, typel, new Float32Array(numParticles*4));
+                        format, typel, new Float32Array(splitWidth*splitHeight*4));
         
         // set the filtering so we don't need mips
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
@@ -310,7 +340,7 @@ function mainGl(canvas) {
     /// ------------------------------- ///
 
     // Everything should be bound properly now. Time to start actually rendering stuff to the texture
-    let outData = new Float32Array(blockWidth*blockHeight*4);
+    let outData = new Float32Array(data);
 
     let ctx = canvas2.getContext("webgl2");
     let dotsProgram = dotsProgramGPU(ctx);
@@ -320,9 +350,13 @@ function mainGl(canvas) {
     let randomSeedLocation = gl.getUniformLocation(program, "randSeed");
     let confineLocation = gl.getUniformLocation(program, "confine");
     let GLocation = gl.getUniformLocation(program, "G");
+    let dampFactorLocation = gl.getUniformLocation(program, "dampFactor");
+    let springStrengthLocation = gl.getUniformLocation(program, "springStrength")
     
     gl.uniform1i(confineLocation, confine);
     gl.uniform1f(GLocation, G);
+    gl.uniform1f(dampFactorLocation, dampFactor);
+    gl.uniform1f(springStrengthLocation, springStrength);
 
     // uniforms and parameters for the dotsProgram
     let averagePosCenter = 0;
@@ -353,6 +387,8 @@ function mainGl(canvas) {
             gl.uniform4f(confinementAreaLocation, 0, canvas2.width, 0, canvas2.height);
             gl.uniform2f(randomSeedLocation, Math.random(), Math.random());
             gl.uniform1f(GLocation, G);
+            gl.uniform1f(dampFactorLocation, dampFactor);
+            gl.uniform1f(springStrengthLocation, springStrength);
 
             gl.viewport(0, 0, splitWidth, splitHeight);
 
@@ -361,7 +397,7 @@ function mainGl(canvas) {
 
             // finally, retrieve data from the fb and send it to outData as a js array
             needRegenBuffer = false;
-            if(outData.length/4 != blockHeight*blockWidth){
+            if(outData.length/4 != splitHeight*splitWidth){
                 outData = Array.from(outData);
                 needRegenBuffer = true
             }
@@ -375,6 +411,7 @@ function mainGl(canvas) {
                         splitWidth, splitHeight, 0,
                         format, typel, outData);
         }
+        //console.log(outData);
         // draw dots on canvas based on that data
         drawDotsGPU(outData, ctx, dotsProgram, colors, averagePosCenter);
         lastTime = thisTime;
@@ -562,6 +599,9 @@ function dotsProgramGPU(gl) {
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.POINTS, 0, positions.length / 2); // draw all 4 points
     return prog;
+}
+function drawObjects(ctx) {
+
 }
 function drawDots(data, ctx) {
     let i=0;

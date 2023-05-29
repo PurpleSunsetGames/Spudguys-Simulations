@@ -35,8 +35,19 @@ a{
     width: 100%;
 }
 .otherCanvas{
+    top:0px;
+    left:0px;
+    position:absolute;
     margin-right: 0%;
     width: 100vw;
+    height: auto;
+}
+.nonGLCanvas{
+    top:0px;
+    left:0px;
+    position:absolute;
+    margin-right: 0%;
+    width: 95vw;
     height: auto;
 }
 .canvasContainer{
