@@ -17,8 +17,10 @@ uniform float G;
 uniform vec2 randSeed;
 uniform sampler2D u_texture;
 uniform sampler2D u_conns;
+uniform sampler2D u_conns_tar_lengs;
 uniform sampler2D u_conns2;
-// uniform sampler2D masses_temps_maxcons_tarlengs_texture;
+uniform sampler2D u_conns2_tar_lengs;
+uniform sampler2D masses_tarlengs_texture;
 
 // we need to declare an output for the fragment shader
 out vec4 outColor;
@@ -32,18 +34,18 @@ float rand2(vec2 co) {
 float forceProfile(float dist, float tdist, float repdist) {
     dist = (dist-tdist);
     if(dist<repdist){
-        dist*=80.;
+        dist*=200.;
     }
     return -(springStrength*dist)/300.;
 }
-vec2 interact(float ID, vec2 size, int thisID, vec4 color){
+vec2 interact(float ID, vec2 size, int thisID, vec4 color, float tarleng){
     if (ID>-.5) {
         float x = mod(ID, size.x);
         float y = floor(ID/size.x);
         vec2 comppos;
         float d;
         comppos = texelFetch(u_texture, ivec2(x,y), 0).xy;
-        d = forceProfile(distance(comppos, color.xy), 10., 4.);
+        d = forceProfile(distance(comppos, color.xy), tarleng, tarleng/3.);
         return (color.xy - comppos) * d;
     }
     else{return vec2(0.);}
@@ -54,23 +56,26 @@ void main() {
     vec2 size = vec2(textureSize(u_texture, level));
     float thisID = float(int(gl_FragCoord.x) + int(size.x)*(int(gl_FragCoord.y)));
     vec4 thisConnIDs = texelFetch(u_conns, ivec2(floor(gl_FragCoord.x), floor(gl_FragCoord.y)), 0);
+    vec4 thisConnTarLengs = texelFetch(u_conns_tar_lengs, ivec2(floor(gl_FragCoord.x), floor(gl_FragCoord.y)), 0);
     vec4 thisConnIDs2 = texelFetch(u_conns2, ivec2(floor(gl_FragCoord.x), floor(gl_FragCoord.y)), 0);
+    vec4 thisConnTarLengs2 = texelFetch(u_conns2_tar_lengs, ivec2(floor(gl_FragCoord.x), floor(gl_FragCoord.y)), 0);
 
     vec4 color = texelFetch(u_texture, ivec2(gl_FragCoord.x, gl_FragCoord.y), 0);
     vec2 addVel = vec2(0., 0.);
 
-    addVel += interact(thisConnIDs.x, size, int(thisID), color);
-    addVel += interact(thisConnIDs.y, size, int(thisID), color);
-    addVel += interact(thisConnIDs.z, size, int(thisID), color);
-    addVel += interact(thisConnIDs.w, size, int(thisID), color);
-    addVel += interact(thisConnIDs2.x, size, int(thisID), color);
-    addVel += interact(thisConnIDs2.y, size, int(thisID), color);
-    addVel += interact(thisConnIDs2.z, size, int(thisID), color);
-    addVel += interact(thisConnIDs2.w, size, int(thisID), color);
+    addVel += interact(thisConnIDs.x, size, int(thisID), color, thisConnTarLengs.x);
+    addVel += interact(thisConnIDs.y, size, int(thisID), color, thisConnTarLengs.y);
+    addVel += interact(thisConnIDs.z, size, int(thisID), color, thisConnTarLengs.z);
+    addVel += interact(thisConnIDs.w, size, int(thisID), color, thisConnTarLengs.w);
+    addVel += interact(thisConnIDs2.x, size, int(thisID), color, thisConnTarLengs2.x);
+    addVel += interact(thisConnIDs2.y, size, int(thisID), color, thisConnTarLengs2.y);
+    addVel += interact(thisConnIDs2.z, size, int(thisID), color, thisConnTarLengs2.z);
+    addVel += interact(thisConnIDs2.w, size, int(thisID), color, thisConnTarLengs2.w);
 
-    vec2 newVel = ((color.zw + (addVel*timeStep)))*(1.-dampFactor) + vec2(0., -(G/10.));
+    vec2 newVel = ((color.zw + (addVel*timeStep/10.)))*(1.-dampFactor) + vec2(0., -(G/10.));
     if (color.y+newVel.y<0.){
-        newVel.y = -newVel.y * .5;
+        newVel.y = -newVel.y * .1;
+        newVel.x = newVel.x * .85;
     }
     outColor = vec4(color.xy+(newVel),newVel);
 }

@@ -29,13 +29,13 @@ let displayRes = 2,
     framerate,
     cease = false,
     pointSize = sizeSlider.value / 5,
-    dampFactor = .5,
-    springStrength = .01,
-    timeStep = .1;
+    dampFactor = dampFactorSlider.value,
+    springStrength = .5,
+    timeStep = 1;
 let listOfObjects = [
 ]
  
-let blockWidth=20, blockHeight=30;
+let blockWidth=80, blockHeight=65;
  
 GSliderDisplay.innerHTML = "G: " + Math.round(100*G)/100;
 sizeSliderDisplay.innerHTML = "Particle Size: " + Math.ceil(pointSize);
@@ -62,7 +62,7 @@ dampFactorSlider.addEventListener("input", (e)=>{
 });
 springStrengthSlider.addEventListener("input", (e)=>{
     springStrength = springStrengthSlider.value;
-    springStrengthSliderDisplay.innerHTML = "Strength: " + Math.round(100*springStrength)/100;
+    springStrengthSliderDisplay.innerHTML = "Spring Force: " + Math.round(10*springStrength)/10;
 });
 
 canvas2.addEventListener("touchend", (e)=>{
@@ -146,8 +146,10 @@ async function getFragShad() {
     mainGl(canvas);
 }
 getFragShad();
-let conns =[];
-let conns2 = []
+let conns = [];
+let connsTarLengs = [];
+let conns2 = [];
+let conns2TarLengs = [];
 
 function mainGl(canvas) {
     let gl = canvas.getContext("webgl2");
@@ -212,39 +214,26 @@ function mainGl(canvas) {
     // everything in the below area is for setting up the input and output texture arrays
     /// ------------------------------- ///
 
-    // Make and use the input texture
-    function newTexture(inTex, name, dat) {
-        gl.bindTexture(gl.TEXTURE_2D, inTex);
-        let nameLocation = gl.getUniformLocation(program, name);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
-            splitWidth, splitHeight, 0,
-            gl.RGBA, gl.FLOAT, new Float32Array(dat));
-        
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-        gl.bindTexture(gl.TEXTURE_2D, inTex);
-        gl.uniform1i(nameLocation, inde);
-    }
-
     let inputTexture = gl.createTexture();
     let connsTexture = gl.createTexture();
+    let connsTarLengsTexture = gl.createTexture();
     let conns2Texture = gl.createTexture();
+    let conns2TarLengsTexture = gl.createTexture();
 
     let inputTextureUniformLocation = gl.getUniformLocation(program, "u_texture");
     let connsTextureUniformLocation = gl.getUniformLocation(program, "u_conns");
+    let connsTarLengsTextureUniformLocation = gl.getUniformLocation(program, "u_conns_tar_lengs");
     let conns2TextureUniformLocation = gl.getUniformLocation(program, "u_conns2");
+    let conns2TarLengsTextureUniformLocation = gl.getUniformLocation(program, "u_conns2_tar_lengs");
 
 
     let data = [];
     let colors = [];
+    function bindTexture(texture, data){}
     function regenParticleData(r=false){
         splitWidth = blockWidth; 
         splitHeight = blockHeight;
         gl.bindTexture(gl.TEXTURE_2D, inputTexture);
-
         data = [];
         colors = [];
         for (let i=0; i<splitHeight; i++) {
@@ -256,14 +245,12 @@ function mainGl(canvas) {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
             splitWidth, splitHeight, 0,
             gl.RGBA, gl.FLOAT, new Float32Array(data));
-        
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
         gl.bindTexture(gl.TEXTURE_2D, connsTexture);
-
         conns = [];
         let len = splitHeight*splitWidth - 1;
         for (let i=0; i<splitHeight*splitWidth; i++) {
@@ -271,6 +258,7 @@ function mainGl(canvas) {
                        ((i-1)<0||(((i-1)%splitWidth)===(splitWidth-1)))?-1:i-1, 
                        (i+splitWidth)>len?-1:i+splitWidth, 
                        (i-splitWidth)<0?-1:i-splitWidth);
+            connsTarLengs.push(10, 10, 10, 10);
         }
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
             splitWidth, splitHeight, 0,
@@ -279,16 +267,37 @@ function mainGl(canvas) {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.bindTexture(gl.TEXTURE_2D, connsTarLengsTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
+            splitWidth, splitHeight, 0,
+            gl.RGBA, gl.FLOAT, new Float32Array(connsTarLengs));
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
 
         gl.bindTexture(gl.TEXTURE_2D, conns2Texture);
-
         conns2 = [];
+        let tenroot2 = 10*Math.sqrt(2);
         for (let i=0; i<splitHeight*splitWidth; i++) {
-            conns2.push(-1,-1,-1,-1);
+            conns2.push((((i+1+splitWidth)>len)||(((i+1+splitWidth)%splitWidth) === 0))?-1:(i+1+splitWidth), 
+                        ((i-1-splitWidth)<0||(((i-1-splitWidth)%splitWidth) === (splitWidth-1)))?-1:i-1-splitWidth, 
+                        (((i+1-splitWidth)<0)||(((i+1-splitWidth)%splitWidth) === 0))?-1:(i+1-splitWidth), 
+                        ((i-1+splitWidth)>len||(((i-1+splitWidth)%splitWidth) === (splitWidth-1)))?-1:i-1+splitWidth);
+            conns2TarLengs.push(tenroot2,tenroot2,tenroot2,tenroot2);
         }
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
             splitWidth, splitHeight, 0,
             gl.RGBA, gl.FLOAT, new Float32Array(conns2));
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.bindTexture(gl.TEXTURE_2D, conns2TarLengsTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
+            splitWidth, splitHeight, 0,
+            gl.RGBA, gl.FLOAT, new Float32Array(conns2TarLengs));
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
@@ -354,10 +363,16 @@ function mainGl(canvas) {
     gl.activeTexture(gl.TEXTURE0+inde+1);
     gl.bindTexture(gl.TEXTURE_2D, connsTexture);
     gl.uniform1i(connsTextureUniformLocation, inde+1);
-
     gl.activeTexture(gl.TEXTURE0+inde+2);
+    gl.bindTexture(gl.TEXTURE_2D, connsTarLengsTexture);
+    gl.uniform1i(connsTarLengsTextureUniformLocation, inde+2);
+
+    gl.activeTexture(gl.TEXTURE0+inde+3);
     gl.bindTexture(gl.TEXTURE_2D, conns2Texture);
-    gl.uniform1i(conns2TextureUniformLocation, inde+2);
+    gl.uniform1i(conns2TextureUniformLocation, inde+3);
+    gl.activeTexture(gl.TEXTURE0+inde+4);
+    gl.bindTexture(gl.TEXTURE_2D, conns2TarLengsTexture);
+    gl.uniform1i(conns2TarLengsTextureUniformLocation, inde+4);
     
     gl.activeTexture(gl.TEXTURE0+inde);
     gl.bindTexture(gl.TEXTURE_2D, inputTexture);
@@ -479,12 +494,22 @@ function mainGl(canvas) {
                           splitWidth, splitHeight, 0,
                           format, typel, new Float32Array(conns));
             gl.uniform1i(connsTextureUniformLocation, inde+1);
+            gl.bindTexture(gl.TEXTURE_2D, connsTarLengsTexture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
+                          splitWidth, splitHeight, 0,
+                          format, typel, new Float32Array(connsTarLengs));
+            gl.uniform1i(connsTarLengsTextureUniformLocation, inde+2);
 
             gl.bindTexture(gl.TEXTURE_2D, conns2Texture);
             gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
                           splitWidth, splitHeight, 0,
                           format, typel, new Float32Array(conns2));
-            gl.uniform1i(conns2TextureUniformLocation, inde+2);
+            gl.uniform1i(conns2TextureUniformLocation, inde+3);
+            gl.bindTexture(gl.TEXTURE_2D, conns2TarLengsTexture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
+                          splitWidth, splitHeight, 0,
+                          format, typel, new Float32Array(conns2TarLengs));
+            gl.uniform1i(conns2TarLengsTextureUniformLocation, inde+4);
 
             gl.bindTexture(gl.TEXTURE_2D, inputTexture);
             gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
@@ -616,9 +641,11 @@ function drawDotsGPU(data,gl,prog,colors, averagePosCenter) {
     gl.enableVertexAttribArray(a_ColorIndex);
     gl.vertexAttribPointer(a_ColorIndex, 4, gl.FLOAT, false, 0, 0);
     let newdata = [];
+    colors = [];
     let i = 0;
     while (i<data.length) {
         newdata.push(((data[i])) / canvas2.width, ((data[i + 1])) / canvas2.height);
+        colors.push(data[i+2]+.1, .03, data[i+3]+.1, 1);
         i += 4;
     }
     // Add some points to the position buffer
