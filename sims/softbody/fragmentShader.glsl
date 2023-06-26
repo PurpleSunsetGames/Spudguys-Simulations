@@ -10,12 +10,14 @@ in vec4 texpos;
 uniform vec4 confinementArea;
 uniform float dampFactor;
 uniform float springStrength;
+uniform float timeStep;
 
 uniform int confine;
 uniform float G;
 uniform vec2 randSeed;
 uniform sampler2D u_texture;
 uniform sampler2D u_conns;
+uniform sampler2D u_conns2;
 // uniform sampler2D masses_temps_maxcons_tarlengs_texture;
 
 // we need to declare an output for the fragment shader
@@ -27,35 +29,48 @@ float rand(vec2 co){
 float rand2(vec2 co) {
     return float(rand(vec2(rand(co) - rand(-co), rand(co))));
 }
-float forceProfile(float dist, float tdist) {
+float forceProfile(float dist, float tdist, float repdist) {
     dist = (dist-tdist);
-    if (abs(dist) > 100.) {dist=0.;}
-    return springStrength*dist/50.;
+    if(dist<repdist){
+        dist*=80.;
+    }
+    return -(springStrength*dist)/300.;
 }
+vec2 interact(float ID, vec2 size, int thisID, vec4 color){
+    if (ID>-.5) {
+        float x = mod(ID, size.x);
+        float y = floor(ID/size.x);
+        vec2 comppos;
+        float d;
+        comppos = texelFetch(u_texture, ivec2(x,y), 0).xy;
+        d = forceProfile(distance(comppos, color.xy), 10., 4.);
+        return (color.xy - comppos) * d;
+    }
+    else{return vec2(0.);}
+}
+
 void main() {
     int level = 0;
-    ivec2 size = textureSize(u_texture, level);
-    ivec2 thisPos = ivec2(gl_FragCoord.x, gl_FragCoord.y);
-    vec4 color = vec4(0.);
-    color = texelFetch(u_texture, thisPos, level);
+    vec2 size = vec2(textureSize(u_texture, level));
+    float thisID = float(int(gl_FragCoord.x) + int(size.x)*(int(gl_FragCoord.y)));
+    vec4 thisConnIDs = texelFetch(u_conns, ivec2(floor(gl_FragCoord.x), floor(gl_FragCoord.y)), 0);
+    vec4 thisConnIDs2 = texelFetch(u_conns2, ivec2(floor(gl_FragCoord.x), floor(gl_FragCoord.y)), 0);
+
+    vec4 color = texelFetch(u_texture, ivec2(gl_FragCoord.x, gl_FragCoord.y), 0);
     vec2 addVel = vec2(0., 0.);
 
-    for (int x=thisPos.x-1; x<=min(thisPos.x+1, size.x); x++){
-        for (int y=thisPos.y-1; y<=min(thisPos.y+1, size.y); y++) {
-            if(x>=0 && y>=0 && !(y==thisPos.y && x==thisPos.x)) {
-                vec2 comppos = texelFetch(u_texture, ivec2(x,y),0).xy;
-                float d = forceProfile(distance(comppos, color.xy), 10.*distance(vec2(thisPos), vec2(x,y)));
-                addVel += (comppos - color.xy) * d;
-            }
-        }
-    }
-    vec2 newVel = (color.zw + addVel)*(1.-dampFactor) + vec2(0., -G);
+    addVel += interact(thisConnIDs.x, size, int(thisID), color);
+    addVel += interact(thisConnIDs.y, size, int(thisID), color);
+    addVel += interact(thisConnIDs.z, size, int(thisID), color);
+    addVel += interact(thisConnIDs.w, size, int(thisID), color);
+    addVel += interact(thisConnIDs2.x, size, int(thisID), color);
+    addVel += interact(thisConnIDs2.y, size, int(thisID), color);
+    addVel += interact(thisConnIDs2.z, size, int(thisID), color);
+    addVel += interact(thisConnIDs2.w, size, int(thisID), color);
+
+    vec2 newVel = ((color.zw + (addVel*timeStep)))*(1.-dampFactor) + vec2(0., -(G/10.));
     if (color.y+newVel.y<0.){
         newVel.y = -newVel.y * .5;
-        newVel.x = newVel.x*.8;
     }
-    if (abs(newVel.y) > 1.) {
-
-    }
-    outColor = vec4(color.xy+newVel,newVel);
+    outColor = vec4(color.xy+(newVel),newVel);
 }

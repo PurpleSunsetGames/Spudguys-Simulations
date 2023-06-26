@@ -232,8 +232,8 @@ function mainGl(canvas) {
             randRadius = (Math.random()**3) * radius + 20;
             data.push(Math.cos(randAngle) * randRadius, 
                         Math.sin(randAngle) * randRadius, 
-                        -(Math.sin(randAngle)/randRadius**.333) * startRotVel, 
-                        (Math.cos(randAngle)/randRadius**.333) * startRotVel);
+                      -(Math.sin(randAngle)/randRadius**.333) * startRotVel, 
+                       (Math.cos(randAngle)/randRadius**.333) * startRotVel);
             colors.push(Math.cos(Math.PI*randRadius/radius)**2 + .1, 0, Math.sin(3+Math.PI*randRadius/radius)**2 + .1, 1);
         }
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F,
