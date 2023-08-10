@@ -37,8 +37,8 @@
                 <p class="information sliderDesc blu" id="sizeSliderDisplay">Particle Size: </p>
             </div>
             <div class="sliderContainer dl ltr">
-                <input type="range" id="GSlider" class="slider fll" min=".0001" max="1" value=".08" step=".0001"></input>
-                <p class="information sliderDesc blu" id="GSliderDisplay">G: .08</p>
+                <input type="range" id="GSlider" class="slider fll" min="0" max="1" value="0" step=".001"></input>
+                <p class="information sliderDesc blu" id="GSliderDisplay">G: 0</p>
             </div>
             <div class="sliderContainer dl ltr">
                 <input type="range" id="dampFactorSlider" class="slider fll" min="0" max="1" value=".04" step=".001"></input>
@@ -49,8 +49,19 @@
                 <p class="information sliderDesc blu" id="springStrengthSliderDisplay">Spring Force: .5</p>
             </div>
             <div class="sliderContainer dl ltr">
-                <input type="range" id="timeStepSlider" class="slider fll" min="0" max="2" value="1" step=".1"></input>
+                <input type="range" id="timeStepSlider" class="slider fll" min="0" max="2" value="1" step=".01"></input>
                 <p class="information sliderDesc blu" id="timeStepDisplay">Time Step: 1</p>
+            </div>
+            <div class="sliderContainer dl ltr">
+                <p class="instructions">Block Settings</p>
+            </div>
+            <div class="sliderContainer dl ltr">
+                <input type="range" id="widthSlider" class="slider fll" min="1" max="200" value="50" step="1"></input>
+                <p class="information sliderDesc blu" id="widthDisplay">Width: 50</p>
+            </div>
+            <div class="sliderContainer dl ltr">
+                <input type="range" id="heightSlider" class="slider fll" min="1" max="200" value="50" step="1"></input>
+                <p class="information sliderDesc blu" id="heightDisplay">Height: 50</p>
             </div>
         </div>
     </div>

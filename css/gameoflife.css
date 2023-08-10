@@ -1,0 +1,45 @@
+.column1{
+    float:right
+}
+.canvas{
+    float: left;
+}
+.column2{
+    padding-left: 10px;
+}
+.fon{
+    color: aliceblue;
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif
+}
+.slider{
+    accent-color: #F55050;
+    margin-top: 20px;
+    color: aliceblue;
+    height:5px
+}
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 10px;
+    border-radius: 5px; 
+    background: #33b;
+    cursor: pointer;
+    border-color: black;
+    border-width: 1px;
+    border-style: solid;
+}  
+.slider::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #33b;
+    cursor: pointer;
+    border-color: black;
+    border-width: 1px;
+    border-style: solid;
+}
+.sliderText{
+    float: left;
+    font-size: medium;
+}

@@ -34,7 +34,7 @@ float rand2(vec2 co) {
 float forceProfile(float dist, float tdist, float repdist) {
     dist = (dist-tdist);
     if(dist<repdist){
-        dist*=200.;
+        dist*=100.;
     }
     return -(springStrength*dist)/300.;
 }
@@ -74,8 +74,7 @@ void main() {
 
     vec2 newVel = ((color.zw + (addVel*timeStep/10.)))*(1.-dampFactor) + vec2(0., -(G/10.));
     if (color.y+newVel.y<0.){
-        newVel.y = -newVel.y * .1;
-        newVel.x = newVel.x * .85;
+        newVel.y = 0.;
     }
     outColor = vec4(color.xy+(newVel),newVel);
 }

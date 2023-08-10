@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>WebGPU Life</title>
+    <link rel="stylesheet" href="../../css/gameoflife.css">
+  </head>
+  <body bgcolor="#111">
+    <div class="column1">
+        <canvas width="612" height="612" id="mainCanvas"></canvas>
+    </div>
+    <div class="column2 fon">
+        <p>John Conway's Game of Life</p>
+        <a href="../../" title="Return to Home Menu" style="padding-left:.5%; color: #D55050;">Home</a>
+        <div style="width: 50vw;">
+            <p class="sliderText" id="timeStepSliderDisplay"> Time step: 50ms</p><input type="range" id="timeStepSlider" class="slider" min="0" max="1000" value="50" style="float:right; margin-top: 25px; margin-right: 10px; width: calc(calc(40vw / 2));">
+        </div>
+    </div>
+    <script type="module" src="life.js"></script>
+  </body>
+</html>

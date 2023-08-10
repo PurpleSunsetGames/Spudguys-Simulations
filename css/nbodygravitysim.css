@@ -97,7 +97,7 @@ a{
     background-color: rgb(69, 128, 149);
 }
 .buttonContainer{
-    width: fit-content;
+    width: 44%;
     margin-left:2%;
     margin-right: 60%;
     border-radius: 5px;
@@ -113,6 +113,16 @@ a{
     margin: 5px;
 }
 .homeIcon:hover{
+    opacity: .6;
+}
+.pauseIcon{
+    background: url('../sims/nbodygravity/iconassets/pause.png');
+    height: 20px;
+    width: 20px;
+    border-style: none;
+    margin: 5px;
+}
+.pauseIcon:hover{
     opacity: .6;
 }
 .clearIcon{

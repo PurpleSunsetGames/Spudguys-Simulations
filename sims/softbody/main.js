@@ -12,7 +12,11 @@ let listofIds = [
     "dampFactorSlider",
     "dampFactorSliderDisplay",
     "timeStepSlider",
-    "timeStepDisplay"
+    "timeStepDisplay",
+    "heightSlider",
+    "heightDisplay",
+    "widthSlider",
+    "widthDisplay"
 ];
 
 [listofIds].map(e => window[e] = document.getElementById(e));
@@ -32,10 +36,9 @@ let displayRes = 2,
     dampFactor = dampFactorSlider.value,
     springStrength = .5,
     timeStep = 1;
-let listOfObjects = [
-]
  
-let blockWidth=80, blockHeight=65;
+let blockWidth=Number(widthSlider.value); 
+let blockHeight=Number(heightSlider.value);
  
 GSliderDisplay.innerHTML = "G: " + Math.round(100*G)/100;
 sizeSliderDisplay.innerHTML = "Particle Size: " + Math.ceil(pointSize);
@@ -63,6 +66,14 @@ dampFactorSlider.addEventListener("input", (e)=>{
 springStrengthSlider.addEventListener("input", (e)=>{
     springStrength = springStrengthSlider.value;
     springStrengthSliderDisplay.innerHTML = "Spring Force: " + Math.round(10*springStrength)/10;
+});
+heightSlider.addEventListener("input", (e)=>{
+    blockHeight = heightSlider.value;
+    heightDisplay.innerHTML = "Height: " + blockHeight;
+});
+widthSlider.addEventListener("input", (e)=>{
+    blockWidth = widthSlider.value;
+    widthDisplay.innerHTML = "Width: " + blockWidth;
 });
 
 canvas2.addEventListener("touchend", (e)=>{
@@ -303,6 +314,8 @@ function mainGl(canvas) {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
+        resetTarget();
+
         if(r){return data}
     }
     function clearParticleData(){
@@ -319,9 +332,7 @@ function mainGl(canvas) {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    }
-    regenParticleData();
-    
+    }    
     resetButton.addEventListener("click", regenParticleData);
     clearButton.addEventListener("click", clearParticleData);
 
@@ -357,9 +368,12 @@ function mainGl(canvas) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
     const attachmentPoint = gl.COLOR_ATTACHMENT0;
     gl.framebufferTexture2D(gl.FRAMEBUFFER, attachmentPoint, gl.TEXTURE_2D, targetTexture, level);
+    let inde = 1;
+
+    regenParticleData();
+
     // Bind the inputTexture to texture unit 3, which has been associated with uniform input "u_texture" using uniform1i(location of u_texture, 5)
     // it is also associated with gl.TEXTURE_2D, which is why we are able to update it later
-    let inde = 1;
     gl.activeTexture(gl.TEXTURE0+inde+1);
     gl.bindTexture(gl.TEXTURE_2D, connsTexture);
     gl.uniform1i(connsTextureUniformLocation, inde+1);
@@ -381,6 +395,8 @@ function mainGl(canvas) {
     
     
     function resetTarget(){
+        splitWidth = blockWidth; 
+        splitHeight = blockHeight;
         gl.bindTexture(gl.TEXTURE_2D, inputTexture);
         let inputTextureUniformLocation = gl.getUniformLocation(program, "u_texture");
 
@@ -458,12 +474,6 @@ function mainGl(canvas) {
         if (animating) {
             gl.activeTexture(gl.TEXTURE0+inde);
             gl.bindTexture(gl.TEXTURE_2D, inputTexture);
-            outData.forEach(element => {
-                if(element.isNaN || element===Infinity) {
-                    animating = false;
-                    console.log(outData);
-                }
-            });
             gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
             // Set the uniform parameters and run the program
             gl.uniform4f(confinementAreaLocation, 0, canvas2.width, 0, canvas2.height);
@@ -472,7 +482,11 @@ function mainGl(canvas) {
             gl.uniform1f(dampFactorLocation, dampFactor);
             gl.uniform1f(springStrengthLocation, springStrength);
             gl.uniform1f(timeStepLocation, timeStep);
-
+            if(outData.length/4 != splitHeight*splitWidth){
+                outData = Array.from(outData);
+                needRegenBuffer = true;
+                regenParticleData();
+            }
             gl.viewport(0, 0, splitWidth, splitHeight);
 
             gl.drawArrays(primitiveType, offset, count);
@@ -482,7 +496,9 @@ function mainGl(canvas) {
             needRegenBuffer = false;
             if(outData.length/4 != splitHeight*splitWidth){
                 outData = Array.from(outData);
-                needRegenBuffer = true
+                needRegenBuffer = true;
+                regenParticleData();
+                outData = new Float32Array(outData);
             }
             if(needRegenBuffer){
                 resetTarget();
@@ -514,7 +530,7 @@ function mainGl(canvas) {
             gl.bindTexture(gl.TEXTURE_2D, inputTexture);
             gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat,
                           splitWidth, splitHeight, 0,
-                          format, typel, outData);
+                          format, typel,  new Float32Array(outData));
             gl.uniform1i(inputTextureUniformLocation, inde);
         }
         // draw dots on canvas based on that data

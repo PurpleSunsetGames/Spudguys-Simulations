@@ -8,6 +8,7 @@ let listofIds = [
     "homeIcon",
     "resetButton",
     "clearButton",
+    "pauseButton",
     "particleQuantityInput",
     "sizeSlider",
     "sizeSliderDisplay",
@@ -137,6 +138,9 @@ homeIcon.addEventListener("click",function(){
     windowOffset.x = defaultWindowOffset.x;
     windowOffset.y = defaultWindowOffset.y;
     windowOffset.z = defaultWindowOffset.z;
+});
+pauseButton.addEventListener("click",function(){
+    animating = !animating;
 });
 
 async function getFragShad() {
@@ -419,18 +423,16 @@ function mainGl(canvas) {
         }
     });
     canvas2.addEventListener("dblclick", (e)=>{
-        if (window.innerWidth < window.innerHeight) {
-            numParticles++;
-            outData = Array.from(outData);
-            let rect = e.target.getBoundingClientRect();
-            let x = e.clientX - rect.left;
-            let y = e.clientY + rect.top;
-            x = (x/window.innerWidth) * rect.width;
-            y = (y/window.innerHeight) * rect.height;
-            console.log(x, y, rect.width, windowOffset);
-            outData = new Float32Array(addParticleData(outData, true, [((x-rect.width/2)*windowOffset.z*2)-windowOffset.x*rect.width, (-(y-rect.height/2))*windowOffset.z*2 - windowOffset.y*rect.height, 0, 0]));
-            resetTarget();
-        }
+        numParticles++;
+        outData = Array.from(outData);
+        let rect = e.target.getBoundingClientRect();
+        let x = e.clientX - rect.left;
+        let y = e.clientY + rect.top;
+        x = (x/window.innerWidth) * rect.width;
+        y = (y/window.innerHeight) * rect.height;
+        console.log(x, y, rect.width, windowOffset);
+        outData = new Float32Array(addParticleData(outData, true, [((x-rect.width/2)*windowOffset.z*2)-windowOffset.x*rect.width, (-(y-rect.height/2))*windowOffset.z*2 - windowOffset.y*rect.height, 0, 0]));
+        resetTarget();
     });
 
     drawLoop();    
