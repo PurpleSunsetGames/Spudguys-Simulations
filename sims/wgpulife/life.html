@@ -7,14 +7,19 @@
   </head>
   <body bgcolor="#111">
     <div class="column1">
-        <canvas width="612" height="612" id="mainCanvas"></canvas>
+        <canvas width="512" height="512" id="mainCanvas"></canvas>
     </div>
     <div class="column2 fon">
         <p>John Conway's Game of Life</p>
         <a href="../../" title="Return to Home Menu" style="padding-left:.5%; color: #D55050;">Home</a>
-        <div style="width: 50vw;">
-            <p class="sliderText" id="timeStepSliderDisplay"> Time step: 50ms</p><input type="range" id="timeStepSlider" class="slider" min="0" max="1000" value="50" style="float:right; margin-top: 25px; margin-right: 10px; width: calc(calc(40vw / 2));">
+        <div style="width: 45vw; float:left">
+          <button class="fon button1" title="clear all cells" id="clearButton">Clear board</button>
         </div>
+        <div style="width: 50vw;">
+          <p class="sliderText" id="timeStepSliderDisplay"> Time step: 50ms</p><input type="range" id="timeStepSlider" class="slider" min="0" max="1000" value="50" style="float:right; margin-top: 25px; margin-right: 10px; width: calc(calc(40vw / 2));">
+        </div>
+        
+        
     </div>
     <script type="module" src="life.js"></script>
   </body>

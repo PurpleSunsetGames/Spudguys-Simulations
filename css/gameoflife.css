@@ -17,29 +17,20 @@
     color: aliceblue;
     height:5px
 }
-.slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 20px;
-    height: 10px;
-    border-radius: 5px; 
-    background: #33b;
-    cursor: pointer;
-    border-color: black;
-    border-width: 1px;
-    border-style: solid;
-}  
-.slider::-moz-range-thumb {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #33b;
-    cursor: pointer;
-    border-color: black;
-    border-width: 1px;
-    border-style: solid;
-}
 .sliderText{
     float: left;
     font-size: medium;
+}
+.button1{
+    background-color: black;
+    border-radius: 15px;
+    border-style: solid;
+    border-color: aliceblue;
+    border-width: 1px;
+}
+.button1:hover{
+    opacity: 60%;
+}
+.button1::after{
+    opacity: 40%;
 }
