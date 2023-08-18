@@ -25,7 +25,7 @@ canvas.addEventListener("click",(e)=>{
     toggleCell(e.clientX-canvas.getBoundingClientRect().x, e.clientY-canvas.getBoundingClientRect().y)
 });
 
-const GRID_SIZE = 5;
+const GRID_SIZE = 200;
 
 
 if (!navigator.gpu) {
