@@ -12,16 +12,19 @@
     <div class="column2 fon">
         <p>John Conway's Game of Life</p>
         <a href="../../" title="Return to Home Menu" style="padding-left:.5%; color: #D55050;">Home</a>
-        <div style="width: 45vw; float:left">
+        <div style="width: 45vw; float:left; margin-bottom: 15px;">
           <button class="fon button1" title="clear all cells" id="clearButton">Clear board</button>
           <button class="fon button1" title="pause simulation" id="pauseButton">Pause</button>
           <button class="fon button1" title="randomize simulation" id="randomButton">Lines</button>
         </div>
         <div style="width: 40%; height: 25px; object-fit: contain; float: left;">
-          <p class="sliderText" id="timeStepSliderDisplay"> Time step: 50ms</p><input type="range" id="timeStepSlider" class="slider" min="0" max="1000" value="50" style="float:right; margin-top: 25px; margin-right: 10px; width: calc(calc(40vw / 2));">
+          <p class="sliderText" id="timeStepSliderDisplay"> Time step: 50ms</p><input type="range" id="timeStepSlider" class="slider" min="0" max="1000" value="50" style="float:right; margin-right: 10px; width: calc(calc(40vw / 2));">
         </div>
         <div style="width: 40%; height: 25px; object-fit: contain; float: left;">
-          <p class="sliderText" id="gridSizeSliderDisplay"> Grid size: 80</p><input type="range" id="gridSizeSlider" class="slider" min="0" max="1000" value="50" style="float:right; margin-top: 25px; margin-right: 10px; width: calc(calc(40vw / 2));">
+          <p class="sliderText" id="gridSizeSliderDisplay"> Grid size: 80</p><input type="range" id="gridSizeSlider" class="slider" step=1 min="0" max="1000" value="50" style="float:right; margin-right: 10px; width: calc(calc(40vw / 2));">
+        </div>
+        <div style="width: 40%; height: 25px; object-fit: contain; float: left;">
+          <p class="sliderText" id="cellSizeSliderDisplay"> Cell size: .9</p><input type="range" id="cellSizeSlider" class="slider" min=0 max=1 value=.9 step=".05" style="float:right; margin-right: 10px; width: calc(calc(40vw / 2));">
         </div>
     </div>
     <script type="module" src="life.js"></script>

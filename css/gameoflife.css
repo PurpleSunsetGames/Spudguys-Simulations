@@ -13,18 +13,19 @@
 }
 .slider{
     accent-color: #F55050;
-    margin-top: 20px;
+    margin-top: 10px;
     color: aliceblue;
     float: right;
     height:5px
 }
 .sliderText{
+    margin-top: 0px;
     float: left;
     font-size: medium;
 }
 .button1{
     background-color: black;
-    border-radius: 15px;
+    border-radius: 2.5px;
     border-style: solid;
     border-color: aliceblue;
     border-width: 1px;

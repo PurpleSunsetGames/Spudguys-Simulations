@@ -24,6 +24,11 @@ a{
     font-size: calc(3vh + 3px);
     text-align: center;
     color: rgb(186, 193, 198);
+    border-bottom-width: 2px;
+    border-bottom-style: solid;
+    border-radius: 15px;
+    width:50vw;
+    margin-left: 25vw;
 }
 .thumbImg{
     width:100%;

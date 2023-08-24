@@ -6,6 +6,7 @@ let listofIds = [
     "timeStepSlider",
     "gridSizeSlider",
     "timeStepSliderDisplay",
+    "cellSizeSlider",
     "clearButton",
     "pauseButton",
     "randomButton"
@@ -24,6 +25,21 @@ gridSizeSlider.addEventListener("input", (e)=>{
     GRID_SIZE = gridSizeSlider.value;
     gridSizeSliderDisplay.innerHTML = "Grid size: " + GRID_SIZE;
     requireReset = true;
+});
+cellSizeSlider.addEventListener("input", (e)=>{
+    cellSize = cellSizeSlider.value;
+    cellSizeSliderDisplay.innerHTML = "Cell size: " + cellSize;
+    vertices = new Float32Array([
+        //   X,    Y,
+        -cellSize, -cellSize, // Triangle 1 (Blue)
+         cellSize, -cellSize,
+         cellSize,  cellSize,
+    
+        -cellSize, -cellSize, // Triangle 2 (Red)
+         cellSize,  cellSize,
+        -cellSize,  cellSize,
+    ]);
+    device.queue.writeBuffer(vertexBuffer, /*bufferOffset=*/0, vertices);
 });
 clearButton.addEventListener("click", (e)=>{
     cellStateArray = new Uint32Array(GRID_SIZE * GRID_SIZE);
@@ -45,8 +61,19 @@ pauseButton.addEventListener("click", (e)=>{
 canvas.addEventListener("click",(e)=>{
     toggleCell(e.clientX-canvas.getBoundingClientRect().x, e.clientY-canvas.getBoundingClientRect().y)
 });
+let mouseDown = false;
+canvas.addEventListener("mousedown",(e)=>{
+    mouseDown = true;
+});
+document.addEventListener("mouseup",(e)=>{
+    mouseDown = false;
+});
+canvas.addEventListener("mousemove",(e)=>{
+    if (mouseDown){toggleCell(e.clientX-canvas.getBoundingClientRect().x, e.clientY-canvas.getBoundingClientRect().y, true)}  
+});
 
 if (!navigator.gpu) {
+    alert("WebGPU is not supported on this browser. Try using the latest version of Google Chrome.")
     throw new Error("WebGPU not supported on this browser.");
 }
 
@@ -63,17 +90,17 @@ context.configure({
     format: canvasFormat,
 });
 
-
+let cellSize = .9;
 // two sets (triangles) of three vertices
-const vertices = new Float32Array([
+let vertices = new Float32Array([
     //   X,    Y,
-    -1, -1, // Triangle 1 (Blue)
-     1, -1,
-     1,  1,
+    -cellSize, -cellSize, // Triangle 1 (Blue)
+     cellSize, -cellSize,
+     cellSize,  cellSize,
 
-    -1, -1, // Triangle 2 (Red)
-     1,  1,
-    -1,  1,
+    -cellSize, -cellSize, // Triangle 2 (Red)
+     cellSize,  cellSize,
+    -cellSize,  cellSize,
 ]);
 // adding vertices
 const vertexBuffer = device.createBuffer({
@@ -163,7 +190,7 @@ let stagingBuffer = device.createBuffer({
 });
 
 //const WGPUShaderSource = await fetch("life.wgsl").then(result=>result.text());
-async function toggleCell(posX, posY) {
+async function toggleCell(posX, posY, alwaysOn) {
     const commandEncoder = device.createCommandEncoder();
     stagingBuffer = device.createBuffer({
         size: cellStateArray.byteLength,
@@ -191,9 +218,10 @@ async function toggleCell(posX, posY) {
     posX = Math.floor(GRID_SIZE*posX/canvas.getBoundingClientRect().width);
     posY = Math.floor(GRID_SIZE*(-posY/canvas.getBoundingClientRect().height + 1));
     let i = posX+(posY*GRID_SIZE);
-    data[i] = !data[i];
+
+    data[i] = alwaysOn?1:!data[i];
     console.log(i);
-    cellStateArray=data;
+    cellStateArray = data;
     device.queue.writeBuffer(cellStateStorage[0], 0, cellStateArray);
     device.queue.writeBuffer(cellStateStorage[1], 0, cellStateArray);
 }
@@ -203,6 +231,7 @@ const cellShaderModule = device.createShaderModule({
     struct VertOut {
         @builtin(position) pos: vec4f,
         @location(0) cell: vec2f,
+        @location(1) state: f32
     };
     @group(0) @binding(0) var<uniform> grid: vec2f;
     @group(0) @binding(1) var<storage> cellState: array<u32>;
@@ -214,13 +243,14 @@ const cellShaderModule = device.createShaderModule({
         let state = f32(cellState[instance]);
         let cell = vec2f(i % grid.x, floor(i / grid.x));
         var output: VertOut;
-        output.pos = vec4f((state*pos+1) / grid - 1  + 2*cell/grid, 0, 1);
+        output.pos = vec4f((pos+1) / grid - 1  + 2*cell/grid, 0, 1);
         output.cell = cell;
+        output.state = state;
         return output;
     }
     @fragment
     fn fragmentMain(input: VertOut) -> @location(0) vec4f {
-        return vec4f(1, 1, grid.x/100, 1);
+        return vec4f(input.state, input.state, input.state, 1);
     }`
 });
 const WORKGROUP_SIZE = 8;
@@ -407,7 +437,7 @@ function updateGrid() {
         colorAttachments: [{
             view: context.getCurrentTexture().createView(),
             loadOp: "clear",
-            clearValue: { r: 0, g: 0, b: 0, a: 1.0 },
+            clearValue: { r: 0, g: .1, b: .1, a: 1.0 },
             storeOp: "store",
         }]
     });
