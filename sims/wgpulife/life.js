@@ -4,29 +4,47 @@ const canvas = document.getElementById("mainCanvas");
 
 let listofIds = [
     "timeStepSlider",
+    "gridSizeSlider",
     "timeStepSliderDisplay",
-    "clearButton"
+    "clearButton",
+    "pauseButton",
+    "randomButton"
 ];
-
+let GRID_SIZE = 80;
+let requireReset = false;
 let timeStep = 10;
-
+let paused = false;
 [listofIds].map(e => window[e] = document.getElementById(e));
 
 timeStepSlider.addEventListener("input", (e)=>{
     timeStep = timeStepSlider.value;
     timeStepSliderDisplay.innerHTML = "Time step: " + timeStep + "ms";
 });
+gridSizeSlider.addEventListener("input", (e)=>{
+    GRID_SIZE = gridSizeSlider.value;
+    gridSizeSliderDisplay.innerHTML = "Grid size: " + GRID_SIZE;
+    requireReset = true;
+});
 clearButton.addEventListener("click", (e)=>{
     cellStateArray = new Uint32Array(GRID_SIZE * GRID_SIZE);
     device.queue.writeBuffer(cellStateStorage[0], 0, cellStateArray);
     device.queue.writeBuffer(cellStateStorage[1], 0, cellStateArray);
 });
+randomButton.addEventListener("click", (e)=>{
+    let cellStateArray = new Uint32Array(GRID_SIZE * GRID_SIZE);
+    for (let i = 0; i < cellStateArray.length; i++) {
+        cellStateArray[i] = i % 2;
+    }
+    device.queue.writeBuffer(cellStateStorage[0], 0, cellStateArray);
+    device.queue.writeBuffer(cellStateStorage[1], 0, cellStateArray);
+});
+pauseButton.addEventListener("click", (e)=>{
+    paused = !paused;
+    pauseButton.innerHTML = !paused?"Pause":"Unpause";
+});
 canvas.addEventListener("click",(e)=>{
     toggleCell(e.clientX-canvas.getBoundingClientRect().x, e.clientY-canvas.getBoundingClientRect().y)
 });
-
-const GRID_SIZE = 200;
-
 
 if (!navigator.gpu) {
     throw new Error("WebGPU not supported on this browser.");
@@ -73,18 +91,49 @@ const vertexBufferLayout = {
     }],
 };
 // adding uniforms
-const uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
-const uniformBuffer = device.createBuffer({
+let uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
+let uniformBuffer = device.createBuffer({
     label: "Grid Uniforms",
     size: uniformArray.byteLength,
     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
 });
 device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
-
+function resetCellstateAndBuffers() {
+    cellStateArray = new Uint32Array(GRID_SIZE * GRID_SIZE);
+    // Create a storage buffer to hold the cell state.
+    cellStateStorage = [
+        device.createBuffer({
+            label: "Cell State A",
+            size: cellStateArray.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+        }),
+        device.createBuffer({
+            label: "Cell State B",
+            size: cellStateArray.byteLength,
+            usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+        })
+    ];
+    // Mark every third cell of the first grid as active.
+    for (let i = 0; i < cellStateArray.length; ++i) {
+        cellStateArray[i] = Math.random() > 0.6 ? 1 : 0;
+    }
+    device.queue.writeBuffer(cellStateStorage[0], 0, cellStateArray);
+    
+    // Mark every other cell of the second grid as active.
+    for (let i = 0; i < cellStateArray.length; i++) {
+        cellStateArray[i] = i % 2;
+    }
+    device.queue.writeBuffer(cellStateStorage[1], 0, cellStateArray);
+    stagingBuffer = device.createBuffer({
+        size: cellStateArray.byteLength,
+        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+    });
+    console.log(cellStateArray.byteLength);
+}
 // adding storage buffers
 let cellStateArray = new Uint32Array(GRID_SIZE * GRID_SIZE);
 // Create a storage buffer to hold the cell state.
-const cellStateStorage = [
+let cellStateStorage = [
     device.createBuffer({
         label: "Cell State A",
         size: cellStateArray.byteLength,
@@ -108,7 +157,7 @@ for (let i = 0; i < cellStateArray.length; i++) {
 }
 device.queue.writeBuffer(cellStateStorage[1], 0, cellStateArray);
 
-const stagingBuffer = device.createBuffer({
+let stagingBuffer = device.createBuffer({
     size: cellStateArray.byteLength,
     usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
 });
@@ -116,6 +165,10 @@ const stagingBuffer = device.createBuffer({
 //const WGPUShaderSource = await fetch("life.wgsl").then(result=>result.text());
 async function toggleCell(posX, posY) {
     const commandEncoder = device.createCommandEncoder();
+    stagingBuffer = device.createBuffer({
+        size: cellStateArray.byteLength,
+        usage: GPUBufferUsage.MAP_READ | GPUBufferUsage.COPY_DST
+    });
     commandEncoder.copyBufferToBuffer(
         cellStateStorage[step%2],
         0, // Source offset
@@ -129,16 +182,17 @@ async function toggleCell(posX, posY) {
         0, // Offset
         cellStateArray.byteLength // Length
     );
+    console.log(cellStateArray.byteLength);
 
     const copyArrayBuffer = stagingBuffer.getMappedRange(0, cellStateArray.byteLength);
     const data = new Int32Array(copyArrayBuffer.slice());
     stagingBuffer.unmap();
-    console.log(data);
 
     posX = Math.floor(GRID_SIZE*posX/canvas.getBoundingClientRect().width);
     posY = Math.floor(GRID_SIZE*(-posY/canvas.getBoundingClientRect().height + 1));
     let i = posX+(posY*GRID_SIZE);
-    data[i] = 1;
+    data[i] = !data[i];
+    console.log(i);
     cellStateArray=data;
     device.queue.writeBuffer(cellStateStorage[0], 0, cellStateArray);
     device.queue.writeBuffer(cellStateStorage[1], 0, cellStateArray);
@@ -166,7 +220,7 @@ const cellShaderModule = device.createShaderModule({
     }
     @fragment
     fn fragmentMain(input: VertOut) -> @location(0) vec4f {
-        return vec4f(input.cell/grid, 1, 1);
+        return vec4f(1, 1, grid.x/100, 1);
     }`
 });
 const WORKGROUP_SIZE = 8;
@@ -257,10 +311,10 @@ const simulationPipeline = device.createComputePipeline({
         entryPoint: "computeMain",
     }
 });
-const bindGroups = [
+let bindGroups = [
     device.createBindGroup({
         label: "Cell renderer bind group A",
-        layout: bindGroupLayout, // Updated Line
+        layout: bindGroupLayout, 
         entries: [{
             binding: 0,
             resource: { buffer: uniformBuffer }
@@ -268,13 +322,13 @@ const bindGroups = [
             binding: 1,
             resource: { buffer: cellStateStorage[0] }
         }, {
-            binding: 2, // New Entry
+            binding: 2, 
             resource: { buffer: cellStateStorage[1] }
         }],
     }),
     device.createBindGroup({
         label: "Cell renderer bind group B",
-        layout: bindGroupLayout, // Updated Line
+        layout: bindGroupLayout, 
     
         entries: [{
             binding: 0,
@@ -283,16 +337,71 @@ const bindGroups = [
             binding: 1,
             resource: { buffer: cellStateStorage[1] }
         }, {
-            binding: 2, // New Entry
+            binding: 2, 
             resource: { buffer: cellStateStorage[0] }
         }],
     }),
 ];
-const UPDATE_INTERVAL = 2; // Update every 200ms (5 times/sec)
 let step = 0;
-function updateGrid() {
-    const encoder = device.createCommandEncoder();
+let elapsedTimeSinceLastUpdate = timeStep;
+let startTime = 0;
+let endTime = 0;
 
+function updateGrid() {
+    startTime = new Date();
+    
+    const encoder = device.createCommandEncoder();
+    cellStateArray = new Uint32Array(GRID_SIZE * GRID_SIZE);
+    
+    if (requireReset){
+        cellStateStorage = [
+            device.createBuffer({
+                label: "Cell State A",
+                size: cellStateArray.byteLength,
+                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+            }),
+            device.createBuffer({
+                label: "Cell State B",
+                size: cellStateArray.byteLength,
+                usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC,
+            })
+        ];
+        bindGroups = [
+            device.createBindGroup({
+                label: "Cell renderer bind group A",
+                layout: bindGroupLayout, 
+                entries: [{
+                    binding: 0,
+                    resource: { buffer: uniformBuffer }
+                }, {
+                    binding: 1,
+                    resource: { buffer: cellStateStorage[0] }
+                }, {
+                    binding: 2, 
+                    resource: { buffer: cellStateStorage[1] }
+                }],
+            }),
+            device.createBindGroup({
+                label: "Cell renderer bind group B",
+                layout: bindGroupLayout, 
+            
+                entries: [{
+                    binding: 0,
+                    resource: { buffer: uniformBuffer }
+                }, {
+                    binding: 1,
+                    resource: { buffer: cellStateStorage[1] }
+                }, {
+                    binding: 2, 
+                    resource: { buffer: cellStateStorage[0] }
+                }],
+            }),
+        ];
+        console.log("R");
+        uniformArray = new Float32Array([GRID_SIZE, GRID_SIZE]);
+        device.queue.writeBuffer(uniformBuffer, 0, uniformArray);
+        requireReset = false;
+    }
     // Start a render pass 
     const pass = encoder.beginRenderPass({
         colorAttachments: [{
@@ -302,27 +411,31 @@ function updateGrid() {
             storeOp: "store",
         }]
     });
-  
     // Draw the grid.
     pass.setPipeline(cellPipeline);
-    pass.setBindGroup(0, bindGroups[step % 2]); // Updated!
+    pass.setBindGroup(0, bindGroups[step % 2]); 
     pass.setVertexBuffer(0, vertexBuffer);
     pass.draw(vertices.length / 2, GRID_SIZE * GRID_SIZE);
   
     // End the render pass and submit the command buffer
     pass.end();
-
-    const computePass = encoder.beginComputePass();
-    
-    computePass.setPipeline(simulationPipeline);
-    computePass.setBindGroup(0, bindGroups[step % 2]);
-    const workgroupCount = Math.ceil(GRID_SIZE / WORKGROUP_SIZE);
-    computePass.dispatchWorkgroups(workgroupCount, workgroupCount);
-    computePass.end();
-    step++; // Increment the step count
-    
+    if (elapsedTimeSinceLastUpdate >= timeStep && !paused) {
+        let computePass = encoder.beginComputePass();
+        
+        computePass.setPipeline(simulationPipeline);
+        computePass.setBindGroup(0, bindGroups[step % 2]);
+        let workgroupCount = Math.ceil(GRID_SIZE / WORKGROUP_SIZE);
+        computePass.dispatchWorkgroups(workgroupCount, workgroupCount);
+        computePass.end();
+        elapsedTimeSinceLastUpdate = 0;
+        step++; // Increment the step count
+    }
     device.queue.submit([encoder.finish()]);
-    setTimeout(updateGrid, timeStep);
+
+    endTime = new Date();
+    elapsedTimeSinceLastUpdate += (endTime-startTime)+20;
+
+    requestAnimationFrame(updateGrid);
 }
 
 updateGrid();
