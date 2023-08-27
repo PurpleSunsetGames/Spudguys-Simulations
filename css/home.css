@@ -31,10 +31,16 @@ a{
 .linkContainer{
     padding-top: 5px;
 }
+.mobile-display{display:none}
+.desktop-display{display:block}
+@media (max-width:800px){
+.desktop-display {display:none}
+.mobile-display {display:block}
+}
 .topbarLink{
     text-shadow: 1px 1px 3px #000;
     float: left;
-    font-size: small;
+    font-size: calc(2vh + 3px);
     margin-top: 0px;
     padding-top: 0px;
     margin-bottom: 0px;
@@ -46,7 +52,7 @@ a{
 }
 .selected{
     color: aliceblue;
-    font-size: medium;
+    font-size: calc(2vh + 5px);
 }
 .separater{
     width:98vw;
