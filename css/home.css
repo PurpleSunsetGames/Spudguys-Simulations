@@ -27,7 +27,7 @@ a{
     white-space: nowrap;
 }
 .sectionTitle{
-    font-size: calc(2vh + 2px);
+    font-size: calc(3vh + 3px);
     text-align: center;
     color: rgb(186, 193, 198);
     border-bottom-width: 2px;
@@ -36,7 +36,7 @@ a{
     width:50vw;
     margin-left: 25vw;
 }
-@media(max-width: 800px){
+@media(orientation: portrait){
     .graph{
         max-block-size: calc(45vw - 30px);
         padding: 10px;
