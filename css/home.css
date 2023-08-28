@@ -109,10 +109,15 @@ a{
     height: 50%;
 }
 .itemDescription2{
-    text-align: center;
-    margin-top: 0px;
-    padding-top: 0px;
+    padding-left: 5%;
     font-size: calc(2vh + 3px);
+    text-align: center;
+    max-width: calc(40vh - 40px);
+    padding-top: 0%; 
+    margin-top: 0%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space: nowrap;
 }
 .orderFirst{
     order:1;
