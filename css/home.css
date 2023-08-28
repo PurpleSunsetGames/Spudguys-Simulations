@@ -4,6 +4,17 @@ a{
 .fon{
     font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif
 }
+.grid{
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    padding: 25px;
+    flex-wrap: wrap;
+}
+.graph{
+    max-block-size: calc(25vw - 40px);
+    padding: 10px;
+}
 .titleContainer{
     text-align: center;
     width: 100%;
@@ -97,6 +108,12 @@ a{
     font-size: calc(2vh + 3px);
     height: 50%;
 }
+.itemDescription2{
+    text-align: center;
+    margin-top: 0px;
+    padding-top: 0px;
+    font-size: calc(2vh + 3px);
+}
 .orderFirst{
     order:1;
 }
@@ -124,7 +141,6 @@ h1{
 }
 p{
     text-shadow: 1px 1px 1px rgb(0, 0, 0);
-    font-size: medium;
     padding-top: 1%;
     padding-bottom: 6%;
     color: rgb(186, 193, 198);
