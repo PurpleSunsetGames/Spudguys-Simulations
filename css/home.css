@@ -12,8 +12,28 @@ a{
     flex-wrap: wrap;
 }
 .graph{
-    max-block-size: calc(40vh - 40px);
+    max-block-size: calc(25vw - 40px);
     padding: 10px;
+}
+.itemDescription2{
+    padding-left: 5%;
+    font-size: calc(2vh + 2px);
+    text-align: center;
+    max-width: calc(25vw - 40px);
+    padding-top: 0%; 
+    margin-top: 0%;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space: nowrap;
+}
+@media(max-width:800px){
+    .graph{
+        max-block-size: calc(45vw - 30px);
+        padding: 10px;
+    }
+    .itemDescription2{
+        max-block-size: calc(45vw - 30px);   
+    }
 }
 .titleContainer{
     text-align: center;
@@ -107,17 +127,6 @@ a{
     margin-top: 3%;
     font-size: calc(2vh + 3px);
     height: 50%;
-}
-.itemDescription2{
-    padding-left: 5%;
-    font-size: calc(2vh + 3px);
-    text-align: center;
-    max-width: calc(40vh - 40px);
-    padding-top: 0%; 
-    margin-top: 0%;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space: nowrap;
 }
 .orderFirst{
     order:1;
