@@ -12,7 +12,7 @@ a{
     flex-wrap: wrap;
 }
 .graph{
-    max-block-size: calc(25vw - 40px);
+    max-block-size: calc(40vh - 40px);
     padding: 10px;
 }
 .titleContainer{
