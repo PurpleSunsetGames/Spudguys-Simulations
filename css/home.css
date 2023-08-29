@@ -38,17 +38,21 @@ a{
 }
 @media(orientation: portrait){
     .graph{
-        max-block-size: calc(45vw - 30px);
-        padding: 10px;
+        max-block-size: 46vw;
+        padding: 1vw;
     }
     .itemDescription2{
-        max-block-size: calc(45vw - 30px);   
-        max-width: calc(45vw - 40px);
+        padding-left: 0%;
+        max-block-size: 46vw;   
+        max-width: 46vw;
     }
     .sectionTitle{
         margin-left: 10vw;
         width: 80vw;
         font-size: calc(2vh + 2px);
+    }
+    .grid{
+        padding: 0px
     }
 }
 .titleContainer{
