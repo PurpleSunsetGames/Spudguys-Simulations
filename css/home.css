@@ -111,16 +111,16 @@ a{
     margin-bottom: 15px;
 }
 .thumbImg{
-    width:100%;
+    width: 30vw;
     border-radius: 15px;
     border: solid;
     border-width: 2px;
     border-color: rgb(186, 193, 198);
 }
 .thumbImgContainer{
-    margin-left: 5%;
-    width: 90%;
-    height: 50%;
+    padding-left: 0%;
+    width: fit-content;
+    height: fit-content;
 }
 .itemTitle{
     color:rgb(186, 193, 198);
@@ -128,15 +128,15 @@ a{
     margin: auto;
 }
 .itemDescriptionContainer{
-    width:95%;
+    width:63vw;
     height:50%;
-    margin-left: 5%;
-    margin-top: 5%;
+    padding-left: 2vw;
+    margin-top: 1vw;
 }
 .itemDescription{
     margin-top: 3%;
+    padding-left: 0vw;
     font-size: calc(2vh + 3px);
-    height: 50%;
 }
 .orderFirst{
     order:1;
@@ -147,8 +147,7 @@ a{
 .itemContainer{
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    width: 98vw;
-    height: 50%;
+    width: 96vw;
 }
 .fll{
     float:left
