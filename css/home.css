@@ -16,7 +16,7 @@ a{
     padding: 10px;
 }
 .itemDescription2{
-    padding-left: 5%;
+    padding-left: 0%;
     font-size: calc(2vh + 2px);
     text-align: center;
     max-width: calc(25vw - 40px);
